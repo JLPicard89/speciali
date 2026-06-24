@@ -379,10 +379,9 @@ async function authCheck(){
   </div>
   <div style="padding-top:6px"></div>
   <div class="sb-divider">Fogli Drive</div>
-  <div class="sb-item" id="nav-progetti" onclick="go('progetti')"><svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2z"/></svg>Progetti Aperti</div>
   <div class="sb-item" id="nav-calcolatore" onclick="go('calcolatore')"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/></svg>Calcolatore Piano Unico Tuls</div>
   <div class="sb-item" id="nav-speciali" onclick="go('speciali')"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Speciali</div>
-  <div class="sb-item" id="nav-balance" onclick="go('balance')"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 7v10"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 15 5 19m7-4 7 4"/></svg>Proc. Balance</div>
+  <div class="sb-item" id="nav-spessori" onclick="go('spessori')"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="4" rx="1"/><rect x="2" y="10" width="20" height="4" rx="1"/><rect x="2" y="17" width="20" height="4" rx="1"/></svg>Spessori</div>
   <div class="sb-divider">Utility</div>
   <div class="sb-item" id="nav-pianocarico" onclick="go('pianocarico')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8h3m-3 3h5m-5 3h8M14 8h3"/></svg>Piani di carico</div>
   <div class="sb-item" id="nav-valute" onclick="go('valute')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20M2 12h20"/><path d="M12 2c-3 4-3 14 0 20M8 6.5c0 0 2.5 1 4 1s4-1 4-1M8 17.5c0 0 2.5-1 4-1s4 1 4 1"/></svg>Convertitore Valute</div>
@@ -396,13 +395,10 @@ async function authCheck(){
 /* ── DATA FROM DRIVE ── */
 const PROGETTI=[
   {cliente:'Faris Bandak',nazione:'Palestina',salesman:'Marzotto',prov:'Salesman',codice:'—',rif:'Pack tech',tipo:'Completo',stato:'Da iniziare',note:''},
-  {cliente:'am group',nazione:'Filippine',salesman:'Mazza',prov:'Dealer',codice:'—',rif:'DGM',tipo:'Completo',stato:'In completamento',note:'Progetto quotato a luglio 25, chiesto aggiornamento'},
-  {cliente:'Fluidtech',nazione:'Francia',salesman:'Muller',prov:'Salesman',codice:'—',rif:'Chateau Chalaneis',tipo:'Parziale',stato:'Da iniziare',note:"In attesa di info dal cliente"},
+  {cliente:'Fluidtech',nazione:'Francia',salesman:'Muller',prov:'Salesman',codice:'—',rif:'Chateau Chalaneis',tipo:'Parziale',stato:'Da iniziare',note:'In attesa di info dal cliente'},
   {cliente:'Restoquip',nazione:'Ucraina',salesman:'Lialin',prov:'Salesman',codice:'EX2605173',rif:'—',tipo:'Parziale',stato:'Richieste modifiche',note:"In attesa di dettagli sull'intercompany"},
-  {cliente:'Groupe Benard',nazione:'Francia',salesman:'Mignot',prov:'Dealer',codice:'EX2606191',rif:'G21 Mere cocotte',tipo:'Parziale',stato:'Richieste modifiche',note:''},
-  {cliente:'Metro France',nazione:'Francia',salesman:'Mignot',prov:'Dealer',codice:'—',rif:'—',tipo:'Parziale',stato:'Da iniziare',note:''},
-  {cliente:'Parts town',nazione:'Regno Unito',salesman:'San Bonifacio',prov:'Salesman',codice:'—',rif:'Show Kitchen',tipo:'Completo',stato:'Da iniziare',note:'Discusso con Direzione, presenza piani unici'},
-  {cliente:'cf pro',nazione:'Francia',salesman:'Muller',prov:'Salesman',codice:'—',rif:'M147 belle',tipo:'Completo',stato:'Da iniziare',note:''},
+  {cliente:'cf pro',nazione:'Francia',salesman:'Muller',prov:'Salesman',codice:'—',rif:'M147 belle',tipo:'Completo',stato:'Da iniziare',note:'In attesa di quotazione da UTEC e di risposta dal cliente'},
+  {cliente:'El-meselati',nazione:'Libia',salesman:'Marzotto',prov:'Salesman',codice:'—',rif:'aeroporto',tipo:'Completo',stato:'Da iniziare',note:'Fatta call con dealer per inizio progetto'},
 ];
 
 const SPECIALI=[
@@ -515,7 +511,7 @@ function go(p){
   document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('nav-'+p).classList.add('active');
   _specBrand='';
-  const pages={progetti,calcolatore,speciali,balance,pianocarico:pianoCarico,valute,schede:schadeTecniche};
+  const pages={calcolatore,speciali,spessori,pianocarico:pianoCarico,valute,schede:schadeTecniche};
   document.getElementById('content').innerHTML=pages[p]();
   if(p==='calcolatore') ricalc();
   if(p==='valute') setTimeout(initValute,50);
@@ -662,6 +658,159 @@ function filterSpec(){
 
 
 
+
+var _spBrand='';
+var _spFam='';
+
+var SPESSORI_DATA=[
+  {brand:'TULS',fam:'BTAB',comp:'Fianchi',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTAB',comp:'Montanti fianco',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTAB',comp:'Fondo mobile',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTAB',comp:'Rinforzo fondo',std_mat:'430',std_sp:'10/10',mst_mat:'430',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTAB',comp:'Schiena',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTAB',comp:'Traversa longitudinale',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'20/10'},
+  {brand:'TULS',fam:'BTAB',comp:'Ripiano intermedio',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTAB',comp:'Porta',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTAB',comp:'Controporta',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTAB',comp:'Traversa piedi',std_mat:'Acciaio galv.',std_sp:'20/10',mst_mat:'Acciaio galv.',mst_sp:'20/10'},
+  {brand:'TULS',fam:'BTA',comp:'Fianchi',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTA',comp:'Montanti fianco',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTA',comp:'Fondo mobile',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTA',comp:'Rinforzo fondo',std_mat:'430',std_sp:'10/10',mst_mat:'430',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTA',comp:'Schiena',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTA',comp:'Traversa porte',std_mat:'304',std_sp:'15/10',mst_mat:'304',mst_sp:'15/10'},
+  {brand:'TULS',fam:'BTA',comp:'Profilo Binario',std_mat:'304',std_sp:'10/10',mst_mat:'304',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTA',comp:'Profilo CopriBinario',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTA',comp:'Ripiano intermedio',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTA',comp:'Porta',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTA',comp:'Controporta',std_mat:'430',std_sp:'6/10',mst_mat:'430',mst_sp:'6/10'},
+  {brand:'TULS',fam:'BTA',comp:'Traversa piedi',std_mat:'Acciaio galv.',std_sp:'20/10',mst_mat:'Acciaio galv.',mst_sp:'20/10'},
+  {brand:'TULS',fam:'BTC',comp:'Involucro cass.',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTC',comp:'Fondo mobile',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTC',comp:'Traversa frontale',std_mat:'304',std_sp:'10/10',mst_mat:'304',mst_sp:'20/10'},
+  {brand:'TULS',fam:'BTC',comp:'Staffa supp. guide',std_mat:'304',std_sp:'10/10',mst_mat:'304',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTC',comp:'Bomb. Cassetto',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTC',comp:'Controbomb. Cass.',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'10/10'},
+  {brand:'TULS',fam:'BTC',comp:'Cassetto',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTC',comp:'Schiena Cass.',std_mat:'304',std_sp:'8/10',mst_mat:'304',mst_sp:'8/10'},
+  {brand:'TULS',fam:'BTC',comp:'Traversa piedi',std_mat:'Acciaio galv.',std_sp:'20/10',mst_mat:'Acciaio galv.',mst_sp:'20/10'},
+  {brand:'TULS',fam:'TT',comp:'Piano',std_mat:'304',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'TT',comp:'Traversa Trasversale',std_mat:'304',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'TT',comp:'Traversa longitudinale',std_mat:'304',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'SL',comp:'Gamba',std_mat:'304',std_sp:'20/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'SL',comp:'Ripiano',std_mat:'304',std_sp:'10/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'SL',comp:'Rinf. Ripiano',std_mat:'304',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'PPS',comp:'Fondo',std_mat:'304',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'PPS',comp:'Rinf. fondo',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'PPS',comp:'Fianco',std_mat:'304',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'PPS',comp:'Cielo',std_mat:'304',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'PPS',comp:'Schiena',std_mat:'304',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'PPS',comp:'Ripiano',std_mat:'304',std_sp:'10/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'TULS',fam:'PPS',comp:'Rinf. Ripiano',std_mat:'304',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC TOP',comp:'Top (Piano)',std_mat:'304',std_sp:'20/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC TOP',comp:'Fianchi',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC TOP',comp:'Rinf. Fianco',std_mat:'430',std_sp:'10/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC TOP',comp:'Schiena',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC TOP',comp:'Cruscotto',std_mat:'304',std_sp:'10/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC TOP',comp:'Fondo',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC BASE',comp:'Fondo',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC BASE',comp:'Schiena',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC BASE',comp:'Fianchi',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC BASE',comp:'Traversa inferiore',std_mat:'430',std_sp:'20/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC BASE',comp:'Traversa superiore',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC BASE',comp:'Porta ROC',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+  {brand:'MODULAR',fam:'ROC BASE',comp:'Controporta ROC',std_mat:'430',std_sp:'8/10',mst_mat:'—',mst_sp:'—'},
+];
+
+function renderSpessoriTable(){
+  var filtered=SPESSORI_DATA.filter(function(r){
+    return (!_spBrand||r.brand===_spBrand)&&(!_spFam||r.fam===_spFam);
+  });
+  if(filtered.length===0){
+    return '<div style="padding:2rem;text-align:center;color:var(--c-ink3)">Nessun risultato per i filtri selezionati.</div>';
+  }
+  // group by brand+fam
+  var groups={};
+  var order=[];
+  filtered.forEach(function(r){
+    var k=r.brand+'||'+r.fam;
+    if(!groups[k]){groups[k]={brand:r.brand,fam:r.fam,rows:[]};order.push(k);}
+    groups[k].rows.push(r);
+  });
+  return order.map(function(k){
+    var g=groups[k];
+    var showMaster=g.rows.some(function(r){return r.mst_mat!=='—';});
+    return '<div class="card" style="margin-bottom:var(--gap-sm)">'+
+      '<div class="card-header">'+
+        '<span class="card-title">'+badge(g.brand,'gray')+' '+g.fam+'</span>'+
+        '<span class="card-meta">'+g.rows.length+' componenti</span>'+
+      '</div>'+
+      '<table><thead><tr>'+
+        '<th>Componente</th><th>Materiale</th><th>Spessore</th>'+
+        (showMaster?'<th>Mat. Master</th><th>Sp. Master</th>':'')+
+      '</tr></thead><tbody>'+
+      g.rows.map(function(r){
+        return '<tr>'+
+          '<td>'+r.comp+'</td>'+
+          '<td class="td-mono">'+r.std_mat+'</td>'+
+          '<td class="td-mono">'+r.std_sp+'</td>'+
+          (showMaster?
+            '<td class="td-mono">'+(r.mst_mat==='—'?'<span style="color:var(--c-ink3)">—</span>':r.mst_mat)+'</td>'+
+            '<td class="td-mono">'+(r.mst_sp==='—'?'<span style="color:var(--c-ink3)">—</span>':r.mst_sp)+'</td>'
+          :'')+
+        '</tr>';
+      }).join('')+
+      '</tbody></table></div>';
+  }).join('');
+}
+
+function setSpBrand(b,btn){
+  _spBrand=b;
+  _spFam=''; // reset famiglia quando cambia brand
+  document.querySelectorAll('#sp-brand-filter .fbtn').forEach(function(x){x.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  // rigenera i bottoni famiglia
+  var famDiv=document.getElementById('sp-fam-filter');
+  if(famDiv){famDiv.innerHTML=buildSpFamButtons();}
+  var tc=document.getElementById('sp-table-container');
+  if(tc)tc.innerHTML=renderSpessoriTable();
+}
+
+function setSpFam(f,btn){
+  _spFam=f;
+  document.querySelectorAll('#sp-fam-filter .fbtn').forEach(function(x){x.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  var tc=document.getElementById('sp-table-container');
+  if(tc)tc.innerHTML=renderSpessoriTable();
+}
+
+function buildSpFamButtons(){
+  var brands=_spBrand?[_spBrand]:[...new Set(SPESSORI_DATA.map(function(r){return r.brand;}))];
+  var fams=[...new Set(SPESSORI_DATA.filter(function(r){return brands.indexOf(r.brand)>=0;}).map(function(r){return r.fam;}))];
+  return '<button class="fbtn'+(!_spFam?' on':'')+'" onclick="setSpFam(\'\',this)">Tutte</button>'+
+    fams.map(function(f){return '<button class="fbtn'+(f===_spFam?' on':'')+'" onclick="setSpFam(\''+f+'\',this)">'+f+'</button>';}).join('');
+}
+
+function spessori(){
+  var brands=[...new Set(SPESSORI_DATA.map(function(r){return r.brand;}))];
+  return '<div class="page" style="padding-bottom:0">'+
+    '<div class="ph" style="margin-bottom:var(--gap-sm)">'+
+      '<div class="ph-eyebrow">Fogli Drive</div>'+
+      '<div class="ph-title">Spessori</div>'+
+      '<div class="ph-sub">Spessori e materiali componenti — Standard vs Master</div>'+
+    '</div>'+
+    '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:var(--gap-sm)">'+
+      '<div class="filter-group" id="sp-brand-filter">'+
+        '<button class="fbtn on" onclick="setSpBrand(\'\',this)">Tutti</button>'+
+        brands.map(function(b){return '<button class="fbtn" onclick="setSpBrand(\''+b+'\',this)">'+b+'</button>';}).join('')+
+      '</div>'+
+      '<div class="filter-group" id="sp-fam-filter">'+
+        buildSpFamButtons()+
+      '</div>'+
+    '</div>'+
+    '<div id="sp-table-container">'+renderSpessoriTable()+'</div>'+
+  '</div>';
+}
 
 function balance(){
   const cases=[
