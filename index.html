@@ -268,7 +268,7 @@ tbody tr:hover td{background:var(--c-bg)}
   background:none;border:none;border-left:2px solid transparent;
   font-family:inherit;font-size:var(--fs-xs);
   color:var(--c-ink2);cursor:pointer;text-align:left;
-  transition:all .1s;line-height:1.4;
+  transition:all .1s;line-height:1.4;position:relative;
 }
 .var-cat-btn:hover{background:var(--c-surface2);color:var(--c-ink);}
 .var-cat-btn.on{
@@ -2387,17 +2387,17 @@ var VDATA=[
 ];
 var VPARAMS=["Larghezza", "Profondit\u00e0", "Altezza", "Foro sbarazzo", "Spessore piano", "Alzatina laterale", "Baionetta", "Ruote", "Collegamenti", "Ripiano intermedio", "Piano saldato", "Cassetto", "Gambe aggiuntive", "Vasca", "Altro"];
 
-var _vCat='', _vSig='', _vQ='', _vParams={};
+var _vCats={}, _vSig='', _vQ='', _vParams={};
 
 function _vFiltered(){
+  var hasCat=Object.keys(_vCats).length>0;
   return VDATA.filter(function(r){
-    if(_vCat && r.cat!==_vCat) return false;
+    if(hasCat && !_vCats[r.cat]) return false;
     if(_vSig && r.sig!==_vSig) return false;
     if(_vQ){
       var hay=(r.cod+' '+r.mod+' '+r.desc+' '+r.nota).toLowerCase();
       if(hay.indexOf(_vQ)<0) return false;
     }
-    // filtri parametri: AND — tutti i parametri attivi devono essere SI
     var pi=Object.keys(_vParams);
     for(var i=0;i<pi.length;i++){
       var idx=VPARAMS.indexOf(pi[i]);
@@ -2407,18 +2407,19 @@ function _vFiltered(){
   });
 }
 
-function _vCountSig(cat){
-  var src=cat?VDATA.filter(function(r){return r.cat===cat;}):VDATA;
+function _vCountSig(){
+  var hasCat=Object.keys(_vCats).length>0;
+  var src=hasCat?VDATA.filter(function(r){return !!_vCats[r.cat];}):VDATA;
   var map={};
   src.forEach(function(r){map[r.sig]=(map[r.sig]||0)+1;});
   return map;
 }
 
 function _vCountParam(pname){
-  // Conta quanti record passerebbero i filtri attuali SE si attiva anche questo parametro
   var idx=VPARAMS.indexOf(pname);
+  var hasCat=Object.keys(_vCats).length>0;
   return VDATA.filter(function(r){
-    if(_vCat && r.cat!==_vCat) return false;
+    if(hasCat && !_vCats[r.cat]) return false;
     if(_vSig && r.sig!==_vSig) return false;
     if(_vQ){var hay=(r.cod+' '+r.mod+' '+r.desc+' '+r.nota).toLowerCase();if(hay.indexOf(_vQ)<0) return false;}
     var pi=Object.keys(_vParams);
@@ -2430,21 +2431,35 @@ function _vCountParam(pname){
 function _vRenderCats(){
   var map={};var order=[];
   VDATA.forEach(function(r){if(!map[r.cat]){map[r.cat]=0;order.push(r.cat);}map[r.cat]++;});
-  var html='<button class="var-cat-btn'+(!_vCat?' on':'')+'" onclick="vSetCat(\'\',this)">'+
-    '<span>Tutte</span><span class="var-cat-n">'+VDATA.length+'</span></button>';
+  var nSel=Object.keys(_vCats).length;
+  var html=
+    // Bottone reset in cima
+    '<button onclick="vResetCats()" style="'+
+      'width:100%;display:flex;align-items:center;justify-content:space-between;'+
+      'padding:6px 12px;margin-bottom:6px;'+
+      'background:none;border:1px solid var(--c-border2);border-radius:var(--radius);'+
+      'font-family:inherit;font-size:var(--fs-xs);color:var(--c-ink3);cursor:pointer;transition:all .1s;">'+
+      '<span>Reset selezione</span>'+
+      '<span style="background:var(--c-surface2);border-radius:2px;padding:0 5px;font-size:10px;font-weight:600">'+
+        (nSel>0?nSel+' sel.':'tutte')+
+      '</span>'+
+    '</button>';
   order.forEach(function(c){
-    html+='<button class="var-cat-btn'+(_vCat===c?' on':'')+
-      '" onclick="vSetCat(\''+c.replace(/'/g,"\\'")+'\',this)">'+
-      '<span style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:130px;white-space:nowrap">'+c+'</span>'+
-      '<span class="var-cat-n">'+map[c]+'</span></button>';
+    var isOn=!!_vCats[c];
+    html+='<button class="var-cat-btn'+(isOn?' on':'')+
+      '" onclick="vToggleCat(\''+c.replace(/'/g,"\\'")+'\')">'+
+      '<span style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:118px;white-space:nowrap">'+c+'</span>'+
+      '<span class="var-cat-n">'+map[c]+'</span>'+
+    '</button>';
   });
   return html;
 }
 
 function _vRenderSigle(){
-  var map=_vCountSig(_vCat);
+  var map=_vCountSig();
   var order=Object.keys(map);
-  var html='<button class="fbtn'+(!_vSig?' on':'')+'" onclick="vSetSig(\'\',this)">Tutte <span style="opacity:.6;font-size:.85em">'+(Object.values(map).reduce(function(a,b){return a+b;},0))+'</span></button>';
+  var tot=order.reduce(function(a,s){return a+map[s];},0);
+  var html='<button class="fbtn'+(!_vSig?' on':'')+'" onclick="vSetSig(\'\',this)">Tutte <span style="opacity:.6;font-size:.85em">'+tot+'</span></button>';
   order.forEach(function(s){
     html+='<button class="fbtn'+(_vSig===s?' on':'')+'" onclick="vSetSig(\''+s+'\',this)">'+s+' <span style="opacity:.6;font-size:.85em">'+map[s]+'</span></button>';
   });
@@ -2472,7 +2487,8 @@ function _vRenderTable(){
   if(rows.length===0){
     return '<div style="padding:2rem;text-align:center;color:var(--c-ink3);font-size:var(--fs-sm)">Nessun risultato per i filtri selezionati.</div>';
   }
-  var title=(_vCat||'Tutte le categorie')+(_vSig?' — '+_vSig:'');
+  var selCats=Object.keys(_vCats);
+  var title=(selCats.length===0?'Tutte le categorie':selCats.length===1?selCats[0]:selCats.length+' categorie')+(_vSig?' — '+_vSig:'');
   return '<div class="card">'+
     '<div class="card-header">'+
       '<span class="card-title">'+title+'</span>'+
@@ -2502,10 +2518,17 @@ function _vRenderTable(){
     '</tbody></table></div>';
 }
 
-function vSetCat(c,btn){
-  _vCat=c; _vSig='';
-  document.querySelectorAll('.var-cat-btn').forEach(function(x){x.classList.remove('on');});
-  if(btn)btn.classList.add('on');
+function vToggleCat(c){
+  if(_vCats[c]) delete _vCats[c]; else _vCats[c]=1;
+  _vSig='';
+  var cf=document.getElementById('var-cat-filter');
+  if(cf)cf.innerHTML=_vRenderCats();
+  _vRefreshAll();
+}
+function vResetCats(){
+  _vCats={}; _vSig='';
+  var cf=document.getElementById('var-cat-filter');
+  if(cf)cf.innerHTML=_vRenderCats();
   _vRefreshAll();
 }
 function vSetSig(s,btn){
