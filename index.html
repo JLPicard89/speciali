@@ -435,6 +435,7 @@ async function authCheck(){
   </div>
   <div style="padding-top:6px"></div>
   <div class="sb-divider">Fogli Drive</div>
+  <div class="sb-item" id="nav-progetti" onclick="go('progetti')"><svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2z"/></svg>Progetti Aperti</div>
   <div class="sb-item" id="nav-calcolatore" onclick="go('calcolatore')"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/></svg>Calcolatore Piano Unico Tuls</div>
   <div class="sb-item" id="nav-speciali" onclick="go('speciali')"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Speciali</div>
   <div class="sb-item" id="nav-spessori" onclick="go('spessori')"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="4" rx="1"/><rect x="2" y="10" width="20" height="4" rx="1"/><rect x="2" y="17" width="20" height="4" rx="1"/></svg>Spessori</div>
@@ -453,7 +454,6 @@ async function authCheck(){
 const PROGETTI=[
   {cliente:'Faris Bandak',nazione:'Palestina',salesman:'Marzotto',prov:'Salesman',codice:'—',rif:'Pack tech',tipo:'Completo',stato:'Da iniziare',note:''},
   {cliente:'Fluidtech',nazione:'Francia',salesman:'Muller',prov:'Salesman',codice:'—',rif:'Chateau Chalaneis',tipo:'Parziale',stato:'Da iniziare',note:'In attesa di info dal cliente'},
-  {cliente:'Restoquip',nazione:'Ucraina',salesman:'Lialin',prov:'Salesman',codice:'EX2605173',rif:'—',tipo:'Parziale',stato:'Richieste modifiche',note:"In attesa di dettagli sull'intercompany"},
   {cliente:'cf pro',nazione:'Francia',salesman:'Muller',prov:'Salesman',codice:'—',rif:'M147 belle',tipo:'Completo',stato:'Da iniziare',note:'In attesa di quotazione da UTEC e di risposta dal cliente'},
   {cliente:'El-meselati',nazione:'Libia',salesman:'Marzotto',prov:'Salesman',codice:'—',rif:'aeroporto',tipo:'Completo',stato:'Da iniziare',note:'Fatta call con dealer per inizio progetto'},
 ];
@@ -568,7 +568,7 @@ function go(p){
   document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('nav-'+p).classList.add('active');
   _specBrand='';
-  const pages={calcolatore,speciali,spessori,varianza,pianocarico:pianoCarico,valute,schede:schadeTecniche};
+  const pages={progetti,calcolatore,speciali,spessori,varianza,pianocarico:pianoCarico,valute,schede:schadeTecniche};
   document.getElementById('content').innerHTML=pages[p]();
   if(p==='calcolatore') ricalc();
   if(p==='valute') setTimeout(initValute,50);
