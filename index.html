@@ -144,20 +144,6 @@ tbody tr:hover td{background:var(--c-bg)}
 
 /* ── Utility: Convertitore ── */
 .util-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:var(--gap-sm);align-items:start}
-.conv-row{display:grid;grid-template-columns:1fr auto 1fr;gap:var(--gap-sm);align-items:end;margin-bottom:var(--gap-sm)}
-.conv-field{display:grid;gap:6px}
-.conv-result{background:var(--c-surface2);border:1px solid var(--c-border2);border-radius:var(--radius);padding:clamp(.875rem,2vw,1.25rem);margin-top:var(--gap-sm)}
-.conv-amount{font-size:clamp(22px,4vw,44px);font-weight:700;letter-spacing:-.04em;color:var(--c-ink);line-height:1.1;word-break:break-all}
-.conv-sub{margin-top:8px;font-size:var(--fs-sm);color:var(--c-ink2);line-height:1.5}
-.conv-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:var(--gap-sm)}
-.conv-meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(90px,100%),1fr));gap:8px;margin-top:var(--gap-sm)}
-.conv-meta{background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--radius);padding:clamp(8px,1.5vw,12px)}
-.conv-meta-val{font-size:clamp(13px,2vw,16px);font-weight:700;letter-spacing:-.02em;color:var(--c-ink)}
-.conv-meta-lbl{font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--c-ink3);margin-top:4px}
-.conv-btn{padding:7px clamp(8px,1.5vw,14px);border:1px solid var(--c-border2);border-radius:var(--radius);background:var(--c-surface);color:var(--c-ink);font-size:var(--fs-sm);font-weight:500;transition:all .12s;white-space:nowrap}
-.conv-btn:hover{border-color:var(--c-ink)}
-.conv-btn.primary{background:var(--c-ink);color:var(--c-surface);border-color:var(--c-ink)}
-.conv-swap{width:40px;height:40px;background:var(--c-ink);color:#fff;border:none;border-radius:var(--radius);display:grid;place-items:center;font-size:17px;flex-shrink:0}
 .rates-list{max-height:min(480px,40vh);overflow-y:auto}
 .rate-row{display:grid;grid-template-columns:clamp(50px,6vw,70px) 1fr auto;gap:8px;align-items:center;padding:8px clamp(8px,1.5vw,14px);border-bottom:1px solid var(--c-border);cursor:pointer;transition:background .1s}
 .rate-row:last-child{border-bottom:none}
@@ -165,9 +151,6 @@ tbody tr:hover td{background:var(--c-bg)}
 .rate-code{font-weight:700;font-size:var(--fs-xs);letter-spacing:.05em}
 .rate-name{font-size:var(--fs-xs);color:var(--c-ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
 .rate-val{font-weight:600;font-size:var(--fs-xs);text-align:right;white-space:nowrap}
-.conv-msg{font-size:var(--fs-xs);margin-top:8px}
-.conv-msg.ok{color:var(--c-green)}
-.conv-msg.err{color:var(--c-red)}
 .search-conv{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px}
 
 /* ── Schede Tecniche (st-) — all fluid ── */
@@ -325,7 +308,34 @@ tbody tr:hover td{background:var(--c-bg)}
   /* ST sidebar becomes normal flow */
   .st-layout{grid-template-columns:1fr}
   .st-sidebar{position:static}
-  .conv-row{grid-template-columns:1fr auto 1fr}
+}
+/* ── pagina Progetti: grafica morbida in stile piano di carico / configuratore ── */
+.pgc-page{--p-border:#e3e2df;--p-surf:#ffffff;--p-surf2:#f7f6f3;--p-text:#1c1b19;--p-muted:#8b8a86;--p-acc:#0d7a5f}
+.pgc-card{background:var(--p-surf);border:1px solid var(--p-border);border-radius:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 22px rgba(0,0,0,.05);overflow:hidden}
+.pgc-toolbar{display:flex;gap:8px;justify-content:flex-end;align-items:center;
+  padding:10px 14px;background:var(--p-surf2);border-bottom:1px solid var(--p-border)}
+.pgc-btn{padding:7px 13px;font-size:12px;font-weight:600;font-family:inherit;color:var(--p-text);
+  background:var(--p-surf);border:1px solid var(--p-border);border-radius:8px;cursor:pointer;transition:.12s}
+.pgc-btn:hover{border-color:var(--p-acc);color:var(--p-acc)}
+.pgc-btn-acc{background:var(--p-acc);border-color:var(--p-acc);color:#fff}
+.pgc-btn-acc:hover{background:#0a6b53;color:#fff}
+#pgc-wrap{overflow-x:auto}
+.pgc-table{width:100%;border-collapse:collapse;font-size:12.5px;color:var(--p-text)}
+.pgc-table th{position:sticky;top:0;background:var(--p-surf2);text-align:left;
+  font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--p-muted);
+  padding:9px 14px;border-bottom:1px solid var(--p-border);white-space:nowrap}
+.pgc-table td{padding:10px 14px;border-bottom:1px solid var(--p-surf2);vertical-align:middle}
+.pgc-table tbody tr{transition:background .12s}
+.pgc-table tbody tr:hover{background:var(--p-surf2)}
+.pgc-table tbody tr:last-child td{border-bottom:none}
+.pgc-abtn{width:30px;height:30px;display:inline-grid;place-items:center;margin-left:4px;
+  background:var(--p-surf);border:1px solid var(--p-border);border-radius:8px;cursor:pointer;
+  font-size:13px;font-family:inherit;color:var(--p-text);transition:.12s}
+.pgc-abtn:hover{border-color:var(--p-acc);color:var(--p-acc);background:var(--p-surf2)}
+.pgc-abtn.del:hover{border-color:#b91c1c;color:#b91c1c;background:#fdf2f2}
+@media(max-width:900px){
+  .pgc-table th:first-child,.pgc-table td:first-child{display:none} /* nasconde l'ID su schermi stretti */
 }
 </style>
 </head>
@@ -447,8 +457,7 @@ async function authCheck(){
   <div class="sb-item" id="nav-progetticloud" onclick="go('progetticloud')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="7" y1="14" x2="13" y2="14"/><line x1="7" y1="17.5" x2="11" y2="17.5"/></svg>Progetti</div>
   <div class="sb-item" id="nav-pianocarico" onclick="go('pianocarico')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8h3m-3 3h5m-5 3h8M14 8h3"/></svg>Piani di carico</div>
   <div class="sb-item" id="nav-cucina3d" onclick="go('cucina3d')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21V12h6v9"/></svg>Configuratore Cucina 3D</div>
-  <div class="sb-item" id="nav-valute" onclick="go('valute')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20M2 12h20"/><path d="M12 2c-3 4-3 14 0 20M8 6.5c0 0 2.5 1 4 1s4-1 4-1M8 17.5c0 0 2.5-1 4-1s4 1 4 1"/></svg>Convertitore Valute</div>
-  <div class="sb-item" id="nav-modelli3d" onclick="go('modelli3d')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>Modelli 3D</div>
+    <div class="sb-item" id="nav-modelli3d" onclick="go('modelli3d')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>Modelli 3D</div>
   <div class="sb-item" id="nav-schede" onclick="go('schede')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Schede Tecniche</div>
   <div class="sb-footer"><div>Dati: maggio 2026</div><div style="margin-top:2px">TNK Group</div></div>
 </nav>
@@ -574,10 +583,9 @@ function go(p){
   document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('nav-'+p).classList.add('active');
   _specBrand='';
-  const pages={progetti,progetticloud,calcolatore,speciali,spessori,varianza,pianocarico:pianoCarico,cucina3d:cucina3D,valute,schede:schadeTecniche,modelli3d:modelli3D};
+  const pages={progetti,progetticloud,calcolatore,speciali,spessori,varianza,pianocarico:pianoCarico,cucina3d:cucina3D,schede:schadeTecniche,modelli3d:modelli3D};
   document.getElementById('content').innerHTML=pages[p]();
   if(p==='calcolatore') ricalc();
-  if(p==='valute') setTimeout(initValute,50);
   if(p==='schede') setTimeout(initST,50);
   if(p==='pianocarico') setTimeout(initPC,50);
   if(p==='cucina3d') setTimeout(initCK,50);
@@ -586,16 +594,20 @@ function go(p){
   if(window.innerWidth<=768) closeSidebar();
 }
 function progetticloud(){
-  return `<div class="page pgc-page">
-  <div class="ph"><div class="ph-eyebrow">Speciali \u2014 cloud</div><div class="ph-title">Progetti</div><div class="ph-sub">Tutti i progetti salvati sul cloud (configuratore cucina e piano di carico)</div></div>
-  <div class="card"><div class="card-header"><span class="card-title">Elenco progetti</span><button class="btn btn-primary" onclick="pgcOpenNewModal()" style="margin-left:auto">+ Nuovo progetto</button><button class="btn" onclick="initProgettiCloud()">\u21bb Aggiorna</button></div>
-  <div id="pgc-wrap" style="overflow-x:auto">
-    <table><thead><tr>
-      <th>ID</th><th>Nome progetto</th><th>Cliente</th><th>Creato</th><th>Ultima modifica</th><th style="text-align:right">Azioni</th>
-    </tr></thead>
-    <tbody id="pgc-tbody"><tr><td colspan="6" style="text-align:center;color:var(--c-ink3);padding:18px">Caricamento\u2026</td></tr></tbody>
-    </table>
-  </div>
+  return `<div class="page pgc-page" style="max-width:none">
+  <div class="ph" style="margin-bottom:14px"><div class="ph-title">Progetti</div></div>
+  <div class="pgc-card">
+    <div class="pgc-toolbar">
+      <button class="pgc-btn pgc-btn-acc" onclick="pgcOpenNewModal()">+ Nuovo progetto</button>
+      <button class="pgc-btn" onclick="initProgettiCloud()">\u21bb Aggiorna</button>
+    </div>
+    <div id="pgc-wrap">
+      <table class="pgc-table"><thead><tr>
+        <th>ID</th><th>Nome progetto</th><th>Cliente</th><th>Creato</th><th>Ultima modifica</th><th style="text-align:right">Azioni</th>
+      </tr></thead>
+      <tbody id="pgc-tbody"><tr><td colspan="6" style="text-align:center;color:#8b8a86;padding:18px">Caricamento\u2026</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -674,16 +686,16 @@ async function initProgettiCloud(){
       const hasCK=!!(d.cucina||d.v||d.items), hasPC=!!d.carico;
       const badges=(hasCK?'\ud83c\udf73':'')+(hasPC?'\ud83d\ude9a':'');
       return `<tr>
-        <td class="td-mono" style="font-size:10.5px;color:var(--c-ink3)" title="${p.id}">${p.id.slice(0,8)}\u2026</td>
-        <td class="td-bold">${badges?badges+' ':''}${(p.nome||'Senza nome')}</td>
-        <td>${p.cliente||'<span style="color:var(--c-ink3)">\u2014</span>'}</td>
-        <td style="white-space:nowrap;font-size:11.5px">${pgcFmt(p.creato_il)}<br><span style="color:var(--c-ink3)">${pgcUser(p.creato_da)}</span></td>
-        <td style="white-space:nowrap;font-size:11.5px">${pgcFmt(p.aggiornato)}<br><span style="color:var(--c-ink3)">${pgcUser(p.aggiornato_da)}</span></td>
+        <td class="td-mono" style="font-size:10.5px;color:var(--p-muted)" title="${p.id}">${p.id.slice(0,8)}\u2026</td>
+        <td style="font-weight:600">${badges?badges+' ':''}${(p.nome||'Senza nome')}</td>
+        <td>${p.cliente||'<span style="color:var(--p-muted)">\u2014</span>'}</td>
+        <td style="white-space:nowrap;font-size:11.5px">${pgcFmt(p.creato_il)}<br><span style="color:var(--p-muted)">${pgcUser(p.creato_da)}</span></td>
+        <td style="white-space:nowrap;font-size:11.5px">${pgcFmt(p.aggiornato)}<br><span style="color:var(--p-muted)">${pgcUser(p.aggiornato_da)}</span></td>
         <td style="white-space:nowrap;text-align:right">
-          <button class="btn" title="Modifica dati testata" onclick='pgcEditTestata(${JSON.stringify(JSON.stringify({id:p.id,nome:p.nome||'',cliente:p.cliente||''}))})' style="padding:5px 8px">\u270e</button>
-          <button class="btn" title="Apri nel configuratore" onclick="pgcOpenCK('${p.id}')" style="padding:5px 8px">\ud83c\udf73</button>
-          <button class="btn" title="Apri nel piano di carico" onclick="pgcOpenPC('${p.id}')" style="padding:5px 8px">\ud83d\ude9a</button>
-          <button class="btn" title="Elimina progetto" onclick="pgcDelete('${p.id}','${(p.nome||'').replace(/'/g,"&#39;")}')" style="padding:5px 8px;color:#b91c1c">\ud83d\uddd1</button>
+          <button class="pgc-abtn" title="Modifica dati testata" onclick='pgcEditTestata(${JSON.stringify(JSON.stringify({id:p.id,nome:p.nome||'',cliente:p.cliente||''}))})'>\u270e</button>
+          <button class="pgc-abtn" title="Apri nel configuratore" onclick="pgcOpenCK('${p.id}')">\ud83c\udf73</button>
+          <button class="pgc-abtn" title="Apri nel piano di carico" onclick="pgcOpenPC('${p.id}')">\ud83d\ude9a</button>
+          <button class="pgc-abtn del" title="Elimina progetto" onclick="pgcDelete('${p.id}','${(p.nome||'').replace(/'/g,"&#39;")}')">\ud83d\uddd1</button>
         </td>
       </tr>`;
     }).join('');
@@ -3091,92 +3103,6 @@ function balance(){
     <div class="case-body"><p class="case-desc">${c.d}</p>${c.k.map(k=>`<div class="case-row"><span>${k[0]}</span><span class="case-row-cod">${k[1]}</span></div>`).join('')}</div>
   </div>`).join('')}</div></div>`;
 }
-
-/* ── Convertitore Valute ── */
-const FALLBACK={EUR:1,USD:1.08,GBP:0.85,CHF:0.95,JPY:170,CAD:1.48,AUD:1.64,MAD:10.70,AED:3.97,CNY:7.84,SEK:11.35,NOK:11.55,DKK:7.46,PLN:4.30,CZK:24.80,TRY:35,INR:90,BRL:5.60,MXN:18.30,ZAR:20};
-let cv={base:'EUR',rates:{},updated:null,fallback:false};
-function valute(){
-  return `<div class="page"><div class="ph"><div class="ph-eyebrow">Utility</div><div class="ph-title">Convertitore Valute</div><div class="ph-sub"><span id="cv-status">Caricamento tassi…</span></div></div>
-  <div class="util-grid">
-    <div><div class="card card-body">
-      <div class="conv-row">
-        <div class="conv-field"><label class="form-label">Importo</label><input class="form-input" type="number" id="cv-amount" value="1000" min="0" step="any" oninput="cvCalc()"></div>
-        <div><label class="form-label" style="visibility:hidden">_</label><button class="conv-swap" onclick="cvSwap()">⇄</button></div>
-        <div class="conv-field"><label class="form-label">Valuta target</label><select class="form-select" id="cv-to" onchange="cvCalc()"></select></div>
-      </div>
-      <div class="conv-field"><label class="form-label">Valuta di partenza</label><select class="form-select" id="cv-from" onchange="cvCalc()"></select></div>
-      <div class="conv-result">
-        <div class="conv-amount" id="cv-result">—</div>
-        <div class="conv-sub" id="cv-sub">In attesa…</div>
-        <div class="conv-actions">
-          <button class="conv-btn primary" onclick="cvCalc()">Aggiorna</button>
-          <button class="conv-btn" onclick="cvCopy()">Copia</button>
-          <button class="conv-btn" onclick="cvReload()">Ricarica tassi</button>
-        </div>
-        <div class="conv-meta-grid">
-          <div class="conv-meta"><div class="conv-meta-val" id="cv-rate">—</div><div class="conv-meta-lbl">Tasso diretto</div></div>
-          <div class="conv-meta"><div class="conv-meta-val" id="cv-inv">—</div><div class="conv-meta-lbl">Tasso inverso</div></div>
-          <div class="conv-meta"><div class="conv-meta-val" id="cv-count">—</div><div class="conv-meta-lbl">Valute caricate</div></div>
-        </div>
-        <div class="conv-msg" id="cv-msg"></div>
-      </div>
-    </div></div>
-    <div class="card">
-      <div class="card-header"><span class="card-title">Elenco tassi</span></div>
-      <div class="card-body" style="padding-bottom:0"><div class="search-conv"><input class="form-input" id="cv-search" type="search" placeholder="Cerca valuta…" oninput="cvRenderList()"><button class="conv-btn" onclick="document.getElementById('cv-search').value='';cvRenderList()">Reset</button></div></div>
-      <div class="rates-list" id="cv-list"></div>
-    </div>
-  </div></div>`;
-}
-function cvName(c){try{const d=new Intl.DisplayNames(['it'],{type:'currency'});const n=d.of(c);return n&&n!==c?n:c;}catch{}return c;}
-function cvFmt(v,c=null){try{return new Intl.NumberFormat('it-IT',c?{style:'currency',currency:c,maximumFractionDigits:6}:{maximumFractionDigits:8}).format(v);}catch{return Number(v).toLocaleString('it-IT',{maximumFractionDigits:8});}}
-function cvAmt(){const v=Number(String(document.getElementById('cv-amount')?.value||'').replace(',','.'));return Number.isFinite(v)&&v>=0?v:0;}
-function cvRate(f,t){const a=cv.rates[f],b=cv.rates[t];if(!a||!b)return null;return b/a;}
-async function cvLoad(base='EUR'){
-  const s=document.getElementById('cv-status');if(s)s.textContent='Caricamento…';
-  try{
-    const r=await fetch('https://open.er-api.com/v6/latest/'+encodeURIComponent(base),{cache:'no-store'});
-    if(!r.ok)throw 0;const d=await r.json();if(d.result!=='success')throw 0;
-    cv={base:d.base_code||base,rates:{...d.rates,[d.base_code||base]:1},updated:d.time_last_update_utc,fallback:false};
-    if(s)s.textContent='Aggiornato: '+cv.updated;
-  }catch{
-    cv={base:'EUR',rates:{...FALLBACK},updated:'fallback',fallback:true};
-    if(s)s.textContent='API non raggiungibile — tassi indicativi';
-    const m=document.getElementById('cv-msg');if(m){m.textContent='Valori indicativi.';m.className='conv-msg err';}
-  }
-  cvFillSelects();cvCalc();cvRenderList();
-}
-function cvFillSelects(){
-  const codes=Object.keys(cv.rates).sort((a,b)=>a.localeCompare(b));
-  const from=document.getElementById('cv-from'),to=document.getElementById('cv-to');if(!from||!to)return;
-  const cf=from.value||'MAD',ct=to.value||'EUR';
-  const opts=codes.map(c=>`<option value="${c}">${c} — ${cvName(c)}</option>`).join('');
-  from.innerHTML=opts;to.innerHTML=opts;
-  from.value=codes.includes(cf)?cf:'MAD';to.value=codes.includes(ct)?ct:'EUR';
-  const cnt=document.getElementById('cv-count');if(cnt)cnt.textContent=codes.length;
-}
-function cvCalc(){
-  const amt=cvAmt(),from=document.getElementById('cv-from')?.value,to=document.getElementById('cv-to')?.value;if(!from||!to)return;
-  const rate=cvRate(from,to);
-  const res=document.getElementById('cv-result'),sub=document.getElementById('cv-sub');
-  if(!rate){if(res)res.textContent='—';return;}
-  const result=amt*rate;
-  if(res)res.textContent=cvFmt(result,to);if(sub)sub.textContent=`${cvFmt(amt,from)} = ${cvFmt(result,to)}`;
-  const rm=document.getElementById('cv-rate'),ri=document.getElementById('cv-inv');
-  if(rm)rm.textContent=`1 ${from} = ${cvFmt(rate)} ${to}`;if(ri)ri.textContent=`1 ${to} = ${cvFmt(1/rate)} ${from}`;
-  cvRenderList();
-}
-function cvRenderList(){
-  const list=document.getElementById('cv-list');if(!list)return;
-  const q=(document.getElementById('cv-search')?.value||'').toLowerCase(),amt=cvAmt()||1,from=document.getElementById('cv-from')?.value||'EUR';
-  const rows=Object.keys(cv.rates).sort((a,b)=>a.localeCompare(b)).filter(c=>{const n=cvName(c).toLowerCase();return !q||c.toLowerCase().includes(q)||n.includes(q);}).map(c=>{const r=cvRate(from,c),v=r?amt*r:null;return `<div class="rate-row" onclick="document.getElementById('cv-to').value='${c}';cvCalc()"><div class="rate-code">${c}</div><div class="rate-name">${cvName(c)}</div><div class="rate-val">${v===null?'—':cvFmt(v)}</div></div>`;}).join('');
-  list.innerHTML=rows;
-}
-function cvSwap(){const f=document.getElementById('cv-from'),t=document.getElementById('cv-to');if(!f||!t)return;const tmp=f.value;f.value=t.value;t.value=tmp;cvCalc();}
-async function cvCopy(){try{await navigator.clipboard.writeText(document.getElementById('cv-sub')?.textContent||'');const m=document.getElementById('cv-msg');if(m){m.textContent='Copiato.';m.className='conv-msg ok';}}catch{}}
-function cvReload(){cvLoad(cv.base);}
-let _cvInit=false;
-function initValute(){if(!document.getElementById('cv-amount'))return;if(_cvInit){cvFillSelects();cvCalc();cvRenderList();return;}_cvInit=true;cvLoad('EUR');}
 
 /* ── Schede Tecniche ── */
 function schadeTecniche(){
