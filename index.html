@@ -675,8 +675,8 @@ async function initProgettiCloud(){
     }
     tbody.innerHTML=rows.map(p=>{
       const d=p.dati||{};
-      const hasCK=!!(d.cucina||d.v||d.items), hasPC=!!d.carico;
-      const badges=(hasCK?'\ud83c\udf73':'')+(hasPC?'\ud83d\ude9a':'');
+      const hasPC=!!d.carico;
+      const badges=hasPC?'\ud83d\ude9a':''; /* solo il camion segnala un piano di carico presente */
       const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
       const inp=(field,val,ph,extra)=>`<input class="pgc-inline${extra||''}" data-id="${p.id}" data-field="${field}" data-orig="${esc(val)}" value="${esc(val)}" placeholder="${ph}" onchange="pgcInlineSave(this)" onkeydown="if(event.key==='Enter')this.blur()">`;
       return `<tr>
