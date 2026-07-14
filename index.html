@@ -321,9 +321,9 @@ tbody tr:hover td{background:var(--c-bg)}
 .pgc-btn-acc{background:var(--p-acc);border-color:var(--p-acc);color:#fff}
 .pgc-btn-acc:hover{background:#0a6b53;color:#fff}
 #pgc-wrap{overflow-x:auto}
-.pgc-table{width:100%;border-collapse:collapse;font-size:12.5px;color:var(--p-text)}
+.pgc-table{width:100%;border-collapse:collapse;font-size:13.5px;color:var(--p-text)}
 .pgc-table th{position:sticky;top:0;background:var(--p-surf2);text-align:left;
-  font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--p-muted);
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--p-muted);
   padding:9px 14px;border-bottom:1px solid var(--p-border);white-space:nowrap}
 .pgc-table td{padding:10px 14px;border-bottom:1px solid var(--p-surf2);vertical-align:middle}
 .pgc-table tbody tr{transition:background .12s}
@@ -334,9 +334,12 @@ tbody tr:hover td{background:var(--c-bg)}
   font-size:13px;font-family:inherit;color:var(--p-text);transition:.12s}
 .pgc-abtn:hover{border-color:var(--p-acc);color:var(--p-acc);background:var(--p-surf2)}
 .pgc-abtn.del:hover{border-color:#b91c1c;color:#b91c1c;background:#fdf2f2}
-.pgc-badges{margin-right:5px}
+.pgc-namecell{display:flex;align-items:center;gap:6px}
+.pgc-namecell .pgc-inline{flex:1}
+.pgc-badges{font-size:17px;line-height:1;flex-shrink:0;white-space:nowrap}
+.pgc-badges:empty{display:none}
 .pgc-inline{width:100%;min-width:70px;background:transparent;border:1px solid transparent;border-radius:7px;
-  padding:5px 7px;font-size:12.5px;font-family:inherit;color:var(--p-text);outline:none;transition:.12s}
+  padding:5px 7px;font-size:13.5px;font-family:inherit;color:var(--p-text);outline:none;transition:.12s}
 .pgc-inline.pgc-bold{font-weight:600}
 .pgc-inline::placeholder{color:var(--p-muted)}
 .pgc-inline:hover{border-color:var(--p-border);background:var(--p-surf)}
@@ -675,13 +678,13 @@ async function initProgettiCloud(){
     }
     tbody.innerHTML=rows.map(p=>{
       const d=p.dati||{};
-      const hasPC=!!d.carico;
-      const badges=hasPC?'\ud83d\ude9a':''; /* solo il camion segnala un piano di carico presente */
+      const hasCK=!!(d.cucina||d.v||d.items), hasPC=!!d.carico;
+      const badges=(hasCK?'\ud83c\udf73':'')+(hasPC?'\ud83d\ude9a':'');
       const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
       const inp=(field,val,ph,extra)=>`<input class="pgc-inline${extra||''}" data-id="${p.id}" data-field="${field}" data-orig="${esc(val)}" value="${esc(val)}" placeholder="${ph}" onchange="pgcInlineSave(this)" onkeydown="if(event.key==='Enter')this.blur()">`;
       return `<tr>
         <td class="td-mono" style="font-size:10.5px;color:var(--p-muted)" title="${p.id}">${p.id.slice(0,8)}\u2026</td>
-        <td>${badges?'<span class="pgc-badges">'+badges+'</span>':''}${inp('nome',p.nome||'Senza nome','Nome progetto',' pgc-bold')}</td>
+        <td><div class="pgc-namecell"><span class="pgc-badges">${badges}</span>${inp('nome',p.nome||'Senza nome','Nome progetto',' pgc-bold')}</div></td>
         <td>${inp('cliente',p.cliente,'\u2014')}</td>
         <td>${inp('commerciale',p.commerciale,'\u2014')}</td>
         <td>${inp('nazione',p.nazione,'\u2014')}</td>
