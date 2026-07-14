@@ -334,6 +334,16 @@ tbody tr:hover td{background:var(--c-bg)}
   font-size:13px;font-family:inherit;color:var(--p-text);transition:.12s}
 .pgc-abtn:hover{border-color:var(--p-acc);color:var(--p-acc);background:var(--p-surf2)}
 .pgc-abtn.del:hover{border-color:#b91c1c;color:#b91c1c;background:#fdf2f2}
+.pgc-badges{margin-right:5px}
+.pgc-inline{width:100%;min-width:70px;background:transparent;border:1px solid transparent;border-radius:7px;
+  padding:5px 7px;font-size:12.5px;font-family:inherit;color:var(--p-text);outline:none;transition:.12s}
+.pgc-inline.pgc-bold{font-weight:600}
+.pgc-inline::placeholder{color:var(--p-muted)}
+.pgc-inline:hover{border-color:var(--p-border);background:var(--p-surf)}
+.pgc-inline:focus{border-color:var(--p-acc);background:var(--p-surf);box-shadow:0 0 0 2px rgba(13,122,95,.10)}
+.pgc-inline.pgc-ok{border-color:var(--p-acc);box-shadow:0 0 0 2px rgba(13,122,95,.18)}
+.pgc-inline.pgc-err{border-color:#b91c1c;box-shadow:0 0 0 2px rgba(185,28,28,.15)}
+.pgc-table td:nth-child(2){min-width:180px}
 @media(max-width:900px){
   .pgc-table th:first-child,.pgc-table td:first-child{display:none} /* nasconde l'ID su schermi stretti */
 }
@@ -603,9 +613,9 @@ function progetticloud(){
     </div>
     <div id="pgc-wrap">
       <table class="pgc-table"><thead><tr>
-        <th>ID</th><th>Nome progetto</th><th>Cliente</th><th>Creato</th><th>Ultima modifica</th><th style="text-align:right">Azioni</th>
+        <th>ID</th><th>Nome progetto</th><th>Cliente</th><th>Commerciale</th><th>Nazione</th><th>Creato</th><th>Ultima modifica</th><th style="text-align:right">Azioni</th>
       </tr></thead>
-      <tbody id="pgc-tbody"><tr><td colspan="6" style="text-align:center;color:#8b8a86;padding:18px">Caricamento\u2026</td></tr></tbody>
+      <tbody id="pgc-tbody"><tr><td colspan="8" style="text-align:center;color:#8b8a86;padding:18px">Caricamento\u2026</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -631,25 +641,7 @@ function progetticloud(){
   </div>
 </div>
 
-<!-- MODAL: modifica testata progetto -->
-<div id="pgc-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,25,.4);z-index:300;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:10px;width:min(440px,92vw);box-shadow:0 18px 50px rgba(0,0,0,.25)">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--c-border)">
-      <span style="font-weight:700;font-size:14px">Modifica dati progetto</span>
-      <button onclick="pgcCloseModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--c-ink3)">\u2715</button>
-    </div>
-    <div style="padding:16px">
-      <div class="form-field"><label class="form-label">Nome progetto</label><input class="form-input" id="pgc-f-nome"></div>
-      <div class="form-field"><label class="form-label">Cliente</label><input class="form-input" id="pgc-f-cliente" placeholder="Facoltativo"></div>
-      <input type="hidden" id="pgc-f-id">
-      <div id="pgc-f-msg" style="font-size:11.5px;color:var(--c-ink3);margin-top:4px"></div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;padding:11px 16px;border-top:1px solid var(--c-border)">
-      <button class="btn" onclick="pgcCloseModal()">Annulla</button>
-      <button class="btn btn-primary" onclick="pgcSaveTestata()">Salva</button>
-    </div>
-  </div>
-</div>`;
+`;
 }
 
 const PGC_URL='https://pbbfnntmwkzondydoftj.supabase.co';
@@ -671,28 +663,31 @@ function pgcUser(u){ return (u&&String(u).trim()) ? u : 'admin'; }
 async function initProgettiCloud(){
   const tbody=document.getElementById('pgc-tbody');
   if(!tbody)return;
-  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--c-ink3);padding:18px">Caricamento\u2026</td></tr>';
+  tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--p-muted);padding:18px">Caricamento\u2026</td></tr>';
   try{
-    const url=PGC_URL+'/rest/v1/progetti?select=id,nome,cliente,creato_il,creato_da,aggiornato,aggiornato_da,dati&order=aggiornato.desc&limit=200';
+    const url=PGC_URL+'/rest/v1/progetti?select=id,nome,cliente,commerciale,nazione,creato_il,creato_da,aggiornato,aggiornato_da,dati&order=aggiornato.desc&limit=200';
     const r=await fetch(url,{headers:pgcHdr()});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const rows=await r.json();
     if(!rows.length){
-      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--c-ink3);padding:18px">Nessun progetto salvato sul cloud.</td></tr>';
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--p-muted);padding:18px">Nessun progetto salvato sul cloud.</td></tr>';
       return;
     }
     tbody.innerHTML=rows.map(p=>{
       const d=p.dati||{};
       const hasCK=!!(d.cucina||d.v||d.items), hasPC=!!d.carico;
       const badges=(hasCK?'\ud83c\udf73':'')+(hasPC?'\ud83d\ude9a':'');
+      const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+      const inp=(field,val,ph,extra)=>`<input class="pgc-inline${extra||''}" data-id="${p.id}" data-field="${field}" data-orig="${esc(val)}" value="${esc(val)}" placeholder="${ph}" onchange="pgcInlineSave(this)" onkeydown="if(event.key==='Enter')this.blur()">`;
       return `<tr>
         <td class="td-mono" style="font-size:10.5px;color:var(--p-muted)" title="${p.id}">${p.id.slice(0,8)}\u2026</td>
-        <td style="font-weight:600">${badges?badges+' ':''}${(p.nome||'Senza nome')}</td>
-        <td>${p.cliente||'<span style="color:var(--p-muted)">\u2014</span>'}</td>
+        <td>${badges?'<span class="pgc-badges">'+badges+'</span>':''}${inp('nome',p.nome||'Senza nome','Nome progetto',' pgc-bold')}</td>
+        <td>${inp('cliente',p.cliente,'\u2014')}</td>
+        <td>${inp('commerciale',p.commerciale,'\u2014')}</td>
+        <td>${inp('nazione',p.nazione,'\u2014')}</td>
         <td style="white-space:nowrap;font-size:11.5px">${pgcFmt(p.creato_il)}<br><span style="color:var(--p-muted)">${pgcUser(p.creato_da)}</span></td>
-        <td style="white-space:nowrap;font-size:11.5px">${pgcFmt(p.aggiornato)}<br><span style="color:var(--p-muted)">${pgcUser(p.aggiornato_da)}</span></td>
+        <td style="white-space:nowrap;font-size:11.5px" id="pgc-mod-${p.id}">${pgcFmt(p.aggiornato)}<br><span style="color:var(--p-muted)">${pgcUser(p.aggiornato_da)}</span></td>
         <td style="white-space:nowrap;text-align:right">
-          <button class="pgc-abtn" title="Modifica dati testata" onclick='pgcEditTestata(${JSON.stringify(JSON.stringify({id:p.id,nome:p.nome||'',cliente:p.cliente||''}))})'>\u270e</button>
           <button class="pgc-abtn" title="Apri nel configuratore" onclick="pgcOpenCK('${p.id}')">\ud83c\udf73</button>
           <button class="pgc-abtn" title="Apri nel piano di carico" onclick="pgcOpenPC('${p.id}')">\ud83d\ude9a</button>
           <button class="pgc-abtn del" title="Elimina progetto" onclick="pgcDelete('${p.id}','${(p.nome||'').replace(/'/g,"&#39;")}')">\ud83d\uddd1</button>
@@ -701,7 +696,7 @@ async function initProgettiCloud(){
     }).join('');
   }catch(e){
     console.warn('initProgettiCloud:',e);
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:18px">\u2717 Errore di rete nel caricare i progetti</td></tr>';
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#b91c1c;padding:18px">\u2717 Errore di rete nel caricare i progetti</td></tr>';
   }
 }
 
@@ -737,32 +732,29 @@ async function pgcCreateProgetto(){
   }
 }
 
-function pgcEditTestata(js){
-  const p=JSON.parse(js);
-  document.getElementById('pgc-f-id').value=p.id;
-  document.getElementById('pgc-f-nome').value=p.nome;
-  document.getElementById('pgc-f-cliente').value=p.cliente;
-  document.getElementById('pgc-f-msg').textContent='';
-  document.getElementById('pgc-modal').style.display='flex';
-}
-function pgcCloseModal(){ document.getElementById('pgc-modal').style.display='none'; }
-
-async function pgcSaveTestata(){
-  const id=document.getElementById('pgc-f-id').value;
-  const nome=document.getElementById('pgc-f-nome').value.trim()||'Senza nome';
-  const cliente=document.getElementById('pgc-f-cliente').value.trim();
-  const msg=document.getElementById('pgc-f-msg');
-  msg.textContent='Salvataggio\u2026';
+/* modifica inline dei campi testata: salva al blur/invio se il valore e' cambiato */
+async function pgcInlineSave(inp){
+  const id=inp.dataset.id, field=inp.dataset.field;
+  let val=inp.value.trim();
+  if(field==='nome'&&!val){val='Senza nome';inp.value=val;}
+  if(val===(inp.dataset.orig||''))return; /* nessuna modifica */
+  inp.classList.remove('pgc-ok','pgc-err');
   try{
     let tnkUser=null; try{tnkUser=localStorage.getItem('tnk_user')||null;}catch(e){}
-    const body=JSON.stringify({nome,cliente:cliente||null,aggiornato:new Date().toISOString(),aggiornato_da:tnkUser});
-    const r=await fetch(PGC_URL+'/rest/v1/progetti?id=eq.'+id,{method:'PATCH',headers:pgcHdr(true),body});
+    const now=new Date().toISOString();
+    const patch={aggiornato:now,aggiornato_da:tnkUser};
+    patch[field]=val||null;
+    const r=await fetch(PGC_URL+'/rest/v1/progetti?id=eq.'+id,{method:'PATCH',headers:pgcHdr(true),body:JSON.stringify(patch)});
     if(!r.ok)throw new Error('HTTP '+r.status);
-    pgcCloseModal();
-    initProgettiCloud();
+    inp.dataset.orig=val;
+    inp.classList.add('pgc-ok');
+    setTimeout(function(){inp.classList.remove('pgc-ok');},1200);
+    /* aggiorna la cella "ultima modifica" della stessa riga senza ricaricare */
+    const cell=document.getElementById('pgc-mod-'+id);
+    if(cell)cell.innerHTML=pgcFmt(now)+'<br><span style="color:var(--p-muted)">'+pgcUser(tnkUser)+'</span>';
   }catch(e){
-    console.warn('pgcSaveTestata:',e);
-    msg.textContent='\u2717 Salvataggio non riuscito';
+    console.warn('pgcInlineSave:',e);
+    inp.classList.add('pgc-err');
   }
 }
 
