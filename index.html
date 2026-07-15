@@ -346,6 +346,13 @@ tbody tr:hover td{background:var(--c-bg)}
 .pgc-inline:focus{border-color:var(--p-acc);background:var(--p-surf);box-shadow:0 0 0 2px rgba(13,122,95,.10)}
 .pgc-inline.pgc-ok{border-color:var(--p-acc);box-shadow:0 0 0 2px rgba(13,122,95,.18)}
 .pgc-inline.pgc-err{border-color:#b91c1c;box-shadow:0 0 0 2px rgba(185,28,28,.15)}
+.addr-wrap{position:relative}
+.addr-sugg{display:none;position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:80;
+  background:#fff;border:1px solid #e3e2df;border-radius:8px;
+  box-shadow:0 8px 26px rgba(0,0,0,.12);max-height:210px;overflow-y:auto}
+.addr-item{padding:7px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid #f7f6f3;line-height:1.35}
+.addr-item:last-child{border-bottom:none}
+.addr-item:hover{background:#f7f6f3}
 select.pgc-sel{appearance:none;-webkit-appearance:none;cursor:pointer;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%238b8a86' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
   background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
@@ -749,9 +756,9 @@ function clienti(){
     </div>
     <div id="pgc-wrap">
       <table class="pgc-table"><thead><tr>
-        <th>Nome</th><th>Indirizzo</th><th>Nazione</th><th>Commerciale</th><th style="text-align:right">Azioni</th>
+        <th>Nome</th><th>P.IVA</th><th>Indirizzo</th><th>Nazione</th><th>Commerciale</th><th style="text-align:right">Azioni</th>
       </tr></thead>
-      <tbody id="cli-tbody"><tr><td colspan="5" style="text-align:center;color:#8b8a86;padding:18px">Caricamento\u2026</td></tr></tbody>
+      <tbody id="cli-tbody"><tr><td colspan="6" style="text-align:center;color:#8b8a86;padding:18px">Caricamento\u2026</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -766,8 +773,10 @@ function clienti(){
     </div>
     <div style="padding:16px">
       <div class="form-field"><label class="form-label">Nome</label><input class="form-input" id="cli-nf-nome" placeholder="Ragione sociale"></div>
-      <div class="form-field"><label class="form-label">Indirizzo</label><input class="form-input" id="cli-nf-indirizzo" placeholder="Facoltativo"></div>
-      <div class="form-field"><label class="form-label">Nazione</label><input class="form-input" id="cli-nf-nazione" placeholder="Facoltativo"></div>
+      <div class="form-field"><label class="form-label">Partita IVA</label><input class="form-input" id="cli-nf-piva" placeholder="Facoltativo"></div>
+      <div class="form-field"><label class="form-label">Indirizzo</label><div class="addr-wrap"><input class="form-input" id="cli-nf-indirizzo" placeholder="Cerca: via civico citt\u00e0\u2026" autocomplete="off"></div>
+        <div style="font-size:10.5px;color:#8b8a86;margin-top:2px">Scegli dai suggerimenti: via, civico, CAP, citt\u00e0, provincia e nazione vengono compilati insieme.</div></div>
+      <div class="form-field"><label class="form-label">Nazione</label><input class="form-input" id="cli-nf-nazione" list="tnk-nazioni" placeholder="Dalla lista, se non usi l'indirizzo"></div>
       <div class="form-field"><label class="form-label">Commerciale</label><input class="form-input" id="cli-nf-commerciale" placeholder="Facoltativo"></div>
       <div id="cli-nf-msg" style="font-size:11.5px;color:#8b8a86;margin-top:4px"></div>
     </div>
@@ -776,13 +785,89 @@ function clienti(){
       <button class="pgc-btn pgc-btn-acc" onclick="cliCreate()">Crea cliente</button>
     </div>
   </div>
-</div>`;
+</div>
+${tnkNazioniDatalist()}`;
+}
+
+/* ─── nazioni del mondo (nomi in italiano) ─── */
+var TNK_NAZIONI=["Afghanistan","Albania","Algeria","Andorra","Angola","Antigua e Barbuda","Arabia Saudita","Argentina","Armenia","Australia","Austria","Azerbaigian","Bahamas","Bahrein","Bangladesh","Barbados","Belgio","Belize","Benin","Bhutan","Bielorussia","Birmania (Myanmar)","Bolivia","Bosnia ed Erzegovina","Botswana","Brasile","Brunei","Bulgaria","Burkina Faso","Burundi","Cambogia","Camerun","Canada","Capo Verde","Ciad","Cile","Cina","Cipro","Citt\u00e0 del Vaticano","Colombia","Comore","Congo","Corea del Nord","Corea del Sud","Costa d'Avorio","Costa Rica","Croazia","Cuba","Danimarca","Dominica","Ecuador","Egitto","El Salvador","Emirati Arabi Uniti","Eritrea","Estonia","Eswatini","Etiopia","Figi","Filippine","Finlandia","Francia","Gabon","Gambia","Georgia","Germania","Ghana","Giamaica","Giappone","Gibuti","Giordania","Grecia","Grenada","Guatemala","Guinea","Guinea-Bissau","Guinea Equatoriale","Guyana","Haiti","Honduras","India","Indonesia","Iran","Iraq","Irlanda","Islanda","Israele","Italia","Kazakistan","Kenya","Kirghizistan","Kiribati","Kosovo","Kuwait","Laos","Lesotho","Lettonia","Libano","Liberia","Libia","Liechtenstein","Lituania","Lussemburgo","Macedonia del Nord","Madagascar","Malawi","Maldive","Malesia","Mali","Malta","Marocco","Mauritania","Mauritius","Messico","Micronesia","Moldavia","Monaco","Mongolia","Montenegro","Mozambico","Namibia","Nauru","Nepal","Nicaragua","Niger","Nigeria","Norvegia","Nuova Zelanda","Oman","Paesi Bassi","Pakistan","Palau","Panama","Papua Nuova Guinea","Paraguay","Per\u00f9","Polonia","Portogallo","Qatar","Regno Unito","Repubblica Ceca","Repubblica Centrafricana","Repubblica Democratica del Congo","Repubblica Dominicana","Romania","Ruanda","Russia","Saint Kitts e Nevis","Saint Lucia","Saint Vincent e Grenadine","Samoa","San Marino","S\u00e3o Tom\u00e9 e Pr\u00edncipe","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Siria","Slovacchia","Slovenia","Somalia","Spagna","Sri Lanka","Stati Uniti","Sudafrica","Sudan","Sud Sudan","Suriname","Svezia","Svizzera","Tagikistan","Taiwan","Tanzania","Thailandia","Timor Est","Togo","Tonga","Trinidad e Tobago","Tunisia","Turchia","Turkmenistan","Tuvalu","Ucraina","Uganda","Ungheria","Uruguay","Uzbekistan","Vanuatu","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
+function tnkNazioniDatalist(){
+  return '<datalist id="tnk-nazioni">'+TNK_NAZIONI.map(function(n){return '<option value="'+n+'">';}).join('')+'</datalist>';
+}
+
+/* ─── ricerca indirizzo integrata (geocoder OpenStreetMap/Nominatim, senza chiave) ───
+   struttura gia' pronta per passare a Google Places quando ci sara' una API key */
+function addrAttach(inp,onPick){
+  if(!inp||inp._addrWired)return;
+  inp._addrWired=true;
+  var wrap=inp.closest('.addr-wrap')||inp.parentElement;
+  wrap.style.position='relative';
+  var box=document.createElement('div');
+  box.className='addr-sugg';
+  wrap.appendChild(box);
+  inp.setAttribute('autocomplete','off');
+  var t=null;
+  inp.addEventListener('input',function(){
+    if(t)clearTimeout(t);
+    box.style.display='none';box.innerHTML='';
+    var q=inp.value.trim();
+    if(q.length<4)return;
+    t=setTimeout(function(){
+      fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&accept-language=it&q='+encodeURIComponent(q))
+        .then(function(r){return r.json();})
+        .then(function(res){
+          box.innerHTML='';
+          if(!res||!res.length){box.style.display='none';return;}
+          res.forEach(function(it){
+            var a=it.address||{};
+            var via=((a.road||a.pedestrian||a.square||'')+' '+(a.house_number||'')).trim();
+            var citta=a.city||a.town||a.village||a.municipality||'';
+            var prov=a.county||a.province||a.state_district||a.state||'';
+            var naz=a.country||'';
+            var parts=[];
+            if(via)parts.push(via);
+            var l2=((a.postcode||'')+' '+citta).trim();
+            if(l2)parts.push(l2);
+            if(prov&&prov!==citta)parts.push('('+prov+')');
+            if(naz)parts.push(naz);
+            var label=parts.length?parts.join(', '):(it.display_name||'');
+            var d=document.createElement('div');
+            d.className='addr-item';
+            d.textContent=label;
+            d.addEventListener('mousedown',function(ev){
+              ev.preventDefault();
+              inp.value=label;
+              box.style.display='none';
+              if(onPick)onPick({formatted:label,nazione:naz});
+            });
+            box.appendChild(d);
+          });
+          box.style.display='block';
+        })
+        .catch(function(){box.style.display='none';});
+    },400);
+  });
+  inp.addEventListener('blur',function(){setTimeout(function(){box.style.display='none';},200);});
+}
+
+/* aggancia la ricerca agli input indirizzo delle righe clienti:
+   alla scelta salva l'indirizzo e adatta la nazione della stessa riga */
+function cliWireAddr(tbody){
+  tbody.querySelectorAll('.pgc-inline[data-field="indirizzo"]').forEach(function(inp){
+    addrAttach(inp,function(pick){
+      cliInlineSave(inp);
+      if(pick.nazione){
+        var naz=tbody.querySelector('.pgc-inline[data-id="'+inp.dataset.id+'"][data-field="nazione"]');
+        if(naz){naz.value=pick.nazione;cliInlineSave(naz);}
+      }
+    });
+  });
 }
 
 var PGC_CLIENTI=[]; /* cache archivio clienti, condivisa con la pagina Progetti */
 
 async function pgcFetchClienti(){
-  const r=await fetch(PGC_URL+'/rest/v1/clienti?select=id,nome,indirizzo,nazione,commerciale&order=nome.asc&limit=500',{headers:pgcHdr()});
+  const r=await fetch(PGC_URL+'/rest/v1/clienti?select=id,nome,piva,indirizzo,nazione,commerciale&order=nome.asc&limit=500',{headers:pgcHdr()});
   if(!r.ok)throw new Error('HTTP '+r.status);
   PGC_CLIENTI=await r.json();
   return PGC_CLIENTI;
@@ -791,11 +876,11 @@ async function pgcFetchClienti(){
 async function initClienti(){
   const tbody=document.getElementById('cli-tbody');
   if(!tbody)return;
-  tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--p-muted);padding:18px">Caricamento\u2026</td></tr>';
+  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--p-muted);padding:18px">Caricamento\u2026</td></tr>';
   try{
     const rows=await pgcFetchClienti();
     if(!rows.length){
-      tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--p-muted);padding:18px">Nessun cliente in archivio.</td></tr>';
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--p-muted);padding:18px">Nessun cliente in archivio.</td></tr>';
       return;
     }
     tbody.innerHTML=rows.map(c=>{
@@ -803,17 +888,19 @@ async function initClienti(){
       const inp=(field,val,ph,extra)=>`<input class="pgc-inline${extra||''}" data-id="${c.id}" data-field="${field}" data-orig="${esc(val)}" value="${esc(val)}" placeholder="${ph}" onchange="cliInlineSave(this)" onkeydown="if(event.key==='Enter')this.blur()">`;
       return `<tr>
         <td>${inp('nome',c.nome,'Nome cliente',' pgc-bold')}</td>
-        <td>${inp('indirizzo',c.indirizzo,'\u2014')}</td>
-        <td>${inp('nazione',c.nazione,'\u2014')}</td>
+        <td>${inp('piva',c.piva,'\u2014')}</td>
+        <td><div class="addr-wrap">${inp('indirizzo',c.indirizzo,'Cerca indirizzo\u2026')}</div></td>
+        <td><input class="pgc-inline" list="tnk-nazioni" data-id="${c.id}" data-field="nazione" data-orig="${esc(c.nazione)}" value="${esc(c.nazione)}" placeholder="\u2014" onchange="cliInlineSave(this)" onkeydown="if(event.key==='Enter')this.blur()"></td>
         <td>${inp('commerciale',c.commerciale,'\u2014')}</td>
         <td style="white-space:nowrap;text-align:right">
           <button class="pgc-abtn del" title="Elimina cliente" onclick="cliDelete('${c.id}','${(c.nome||'').replace(/'/g,"&#39;")}')">\ud83d\uddd1</button>
         </td>
       </tr>`;
     }).join('');
+    cliWireAddr(tbody);
   }catch(e){
     console.warn('initClienti:',e);
-    tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#b91c1c;padding:18px">\u2717 Errore di rete nel caricare i clienti</td></tr>';
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:18px">\u2717 Errore di rete nel caricare i clienti</td></tr>';
   }
 }
 
@@ -837,9 +924,12 @@ async function cliInlineSave(inp){
 }
 
 function cliOpenNewModal(){
-  ['cli-nf-nome','cli-nf-indirizzo','cli-nf-nazione','cli-nf-commerciale'].forEach(id=>{document.getElementById(id).value='';});
+  ['cli-nf-nome','cli-nf-piva','cli-nf-indirizzo','cli-nf-nazione','cli-nf-commerciale'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('cli-nf-msg').textContent='';
   document.getElementById('cli-new-modal').style.display='flex';
+  addrAttach(document.getElementById('cli-nf-indirizzo'),function(pick){
+    if(pick.nazione)document.getElementById('cli-nf-nazione').value=pick.nazione;
+  });
 }
 function cliCloseNewModal(){ document.getElementById('cli-new-modal').style.display='none'; }
 
@@ -851,6 +941,7 @@ async function cliCreate(){
   try{
     const body=JSON.stringify({
       nome,
+      piva:document.getElementById('cli-nf-piva').value.trim()||null,
       indirizzo:document.getElementById('cli-nf-indirizzo').value.trim()||null,
       nazione:document.getElementById('cli-nf-nazione').value.trim()||null,
       commerciale:document.getElementById('cli-nf-commerciale').value.trim()||null
