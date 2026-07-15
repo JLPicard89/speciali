@@ -347,7 +347,7 @@ tbody tr:hover td{background:var(--c-bg)}
 .pgc-inline.pgc-ok{border-color:var(--p-acc);box-shadow:0 0 0 2px rgba(13,122,95,.18)}
 .pgc-inline.pgc-err{border-color:#b91c1c;box-shadow:0 0 0 2px rgba(185,28,28,.15)}
 .addr-wrap{position:relative}
-.addr-sugg{display:none;position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:80;
+.addr-sugg{display:none;position:fixed;z-index:400;
   background:#fff;border:1px solid #e3e2df;border-radius:8px;
   box-shadow:0 8px 26px rgba(0,0,0,.12);max-height:210px;overflow-y:auto}
 .addr-item{padding:7px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid #f7f6f3;line-height:1.35}
@@ -800,11 +800,19 @@ function tnkNazioniDatalist(){
 function addrAttach(inp,onPick){
   if(!inp||inp._addrWired)return;
   inp._addrWired=true;
-  var wrap=inp.closest('.addr-wrap')||inp.parentElement;
-  wrap.style.position='relative';
+  /* il menu vive su body in position:fixed, ancorato al campo: cosi' non resta
+     mai intrappolato dentro modali o celle con overflow */
   var box=document.createElement('div');
   box.className='addr-sugg';
-  wrap.appendChild(box);
+  document.body.appendChild(box);
+  function place(){
+    var r=inp.getBoundingClientRect();
+    box.style.left=r.left+'px';
+    box.style.top=(r.bottom+2)+'px';
+    box.style.width=r.width+'px';
+  }
+  window.addEventListener('scroll',function(){box.style.display='none';},true);
+  window.addEventListener('resize',function(){box.style.display='none';});
   inp.setAttribute('autocomplete','off');
   var t=null;
   inp.addEventListener('input',function(){
@@ -842,6 +850,7 @@ function addrAttach(inp,onPick){
             });
             box.appendChild(d);
           });
+          place();
           box.style.display='block';
         })
         .catch(function(){box.style.display='none';});
