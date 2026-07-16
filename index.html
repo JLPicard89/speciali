@@ -361,6 +361,9 @@ select.pgc-sel{appearance:none;-webkit-appearance:none;cursor:pointer;
   .pgc-table th:first-child,.pgc-table td:first-child{display:none} /* nasconde l'ID su schermi stretti */
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -507,6 +510,7 @@ function go(p){
   const pages={clienti,progetticloud,offerta,pianocarico:pianoCarico,cucina3d:cucina3D,schede:schadeTecniche,modelli3d:modelli3D};
   document.getElementById('content').innerHTML=pages[p]();
   if(p==='clienti') setTimeout(initClienti,50);
+  if(p==='offerta') setTimeout(initOfferta,50);
   if(p==='schede') setTimeout(initST,50);
   if(p==='pianocarico') setTimeout(initPC,50);
   if(p==='cucina3d') setTimeout(initCK,50);
@@ -978,14 +982,369 @@ async function cliDelete(id,nome){
   }
 }
 
-/* ═══ PAGINA OFFERTA (segnaposto) ═══ */
+/* ═══ PAGINA OFFERTA ═══ */
 function offerta(){
   return `<div class="page pgc-page" style="max-width:none">
   <div class="ph" style="margin-bottom:14px"><div class="ph-title">Offerta</div></div>
-  <div class="pgc-card" style="padding:34px;text-align:center;color:#8b8a86;font-size:13px">
-    Pagina in preparazione.
+  <div class="pgc-card">
+    <div class="pgc-toolbar" style="justify-content:flex-start;flex-wrap:wrap">
+      <input class="pgc-inline pgc-bold" id="off-nome" value="Nuova offerta" style="max-width:220px;border-color:#e3e2df;background:#fff" onchange="OFF.nome=this.value.trim()||'Nuova offerta'">
+      <button class="pgc-btn pgc-btn-acc" onclick="offToggleCat()">+ Aggiungi da catalogo</button>
+      <button class="pgc-btn" onclick="document.getElementById('off-xlsx-in').click()">\ud83d\udce5 Importa Excel</button>
+      <span style="flex:1"></span>
+      <button class="pgc-btn" onclick="offCloudSave()">\u2601 Salva cloud</button>
+      <button class="pgc-btn" onclick="offCloudOpen()">\u2601 Apri cloud</button>
+      <button class="pgc-btn" onclick="offToDisegno()">\ud83d\udcd0 \u2192 Disegno</button>
+      <button class="pgc-btn" onclick="offToPianoCarico()">\ud83d\ude9a \u2192 Piano di carico</button>
+      <button class="pgc-btn" onclick="offPDF()">\ud83d\udcc4 PDF</button>
+      <button class="pgc-btn" onclick="offClear()" style="color:#b91c1c">\u2715 Svuota</button>
+      <input type="file" id="off-xlsx-in" accept=".xlsx,.xls" style="display:none" onchange="offImportExcel(event)">
+    </div>
+    <div id="off-cat-panel" style="display:none;border-bottom:1px solid #e3e2df;background:#f7f6f3;padding:10px 14px">
+      <input class="form-input" id="off-cat-q" placeholder="Cerca nel catalogo: nome, modello, codice, marchio\u2026 (min 2 caratteri)" oninput="offCatSearch(this.value)" autocomplete="off">
+      <div id="off-cat-res" style="max-height:260px;overflow-y:auto;margin-top:8px"></div>
+    </div>
+    <div id="pgc-wrap">
+      <table class="pgc-table"><thead><tr>
+        <th style="width:34px">#</th><th>Codice</th><th>Descrizione</th><th>Modello</th>
+        <th style="width:70px">Q.t\u00e0</th><th style="width:110px">Prezzo \u20ac</th><th style="width:80px">Sconto %</th>
+        <th style="width:120px;text-align:right">Totale \u20ac</th><th style="width:46px"></th>
+      </tr></thead>
+      <tbody id="off-tbody"></tbody>
+      <tfoot><tr>
+        <td colspan="7" style="text-align:right;font-weight:700;padding:12px 14px">Totale</td>
+        <td id="off-tot" style="text-align:right;font-weight:700;padding:12px 14px">\u20ac 0,00</td><td></td>
+      </tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: scelta progetto cloud per l'offerta -->
+<div id="off-cloud-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,25,.4);z-index:300;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:10px;width:min(560px,94vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.25)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #e3e2df">
+      <span style="font-weight:700;font-size:14px" id="off-cloud-title">Progetti sul cloud</span>
+      <button onclick="document.getElementById('off-cloud-modal').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8b8a86">\u2715</button>
+    </div>
+    <div id="off-cloud-list" style="overflow-y:auto;padding:8px 10px"></div>
   </div>
 </div>`;
+}
+
+var OFF={rows:[],cloudId:null,nome:'Nuova offerta'};
+var OFF_CAT=[];
+function offEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function offEur(n){return '\u20ac '+(Number(n)||0).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function offRowTot(r){return (Number(r.qty)||0)*(Number(r.prezzo)||0)*(1-(Number(r.sconto)||0)/100);}
+
+async function initOfferta(){
+  var ne=document.getElementById('off-nome');
+  if(ne)ne.value=OFF.nome;
+  offRender();
+  if(!OFF_CAT.length){
+    try{
+      const cols='id,brand,gamma,categoria,nome,modello,codice,prezzo,l,p,h,peso_netto_kg,peso_lordo_kg,larghezza_imballo_mm,profondita_imballo_mm,altezza_imballo_mm,descrizione_listino';
+      const r=await fetch(PGC_URL+'/rest/v1/catalogo?select='+cols+'&order=brand.asc,nome.asc&limit=1000',{headers:pgcHdr()});
+      if(r.ok)OFF_CAT=await r.json();
+    }catch(e){console.warn('catalogo offerta:',e);}
+  }
+}
+
+/* ── catalogo: ricerca e inserimento sequenziale ── */
+function offToggleCat(){
+  var p=document.getElementById('off-cat-panel');
+  p.style.display=(p.style.display==='none')?'block':'none';
+  if(p.style.display==='block')document.getElementById('off-cat-q').focus();
+}
+function offCatSearch(q){
+  var box=document.getElementById('off-cat-res');
+  q=String(q||'').trim().toLowerCase();
+  if(q.length<2){box.innerHTML='';return;}
+  var hits=OFF_CAT.filter(function(c){
+    return [c.nome,c.modello,c.codice,c.brand,c.gamma,c.categoria].some(function(v){
+      return v&&String(v).toLowerCase().indexOf(q)>=0;
+    });
+  }).slice(0,40);
+  if(!hits.length){box.innerHTML='<div style="color:#8b8a86;font-size:12px;padding:8px">Nessun risultato.</div>';return;}
+  box.innerHTML=hits.map(function(c){
+    return '<div class="addr-item" style="display:flex;gap:10px;align-items:baseline" onclick="offAddFromCat('+c.id+')">'+
+      '<b style="min-width:120px">'+offEsc(c.brand)+'</b>'+
+      '<span style="flex:1">'+offEsc(c.nome)+(c.modello?' \u2014 '+offEsc(c.modello):'')+'</span>'+
+      '<span style="color:#8b8a86;font-size:11px">'+offEsc(c.codice||'')+'</span>'+
+      '<span style="font-weight:600">'+offEur(c.prezzo)+'</span>'+
+    '</div>';
+  }).join('');
+}
+function offAddFromCat(id){
+  var c=OFF_CAT.find(function(x){return x.id===id;});
+  if(!c)return;
+  var ex=OFF.rows.find(function(r){return r.codice&&c.codice&&r.codice===c.codice;});
+  if(ex){ex.qty=(Number(ex.qty)||0)+1;}
+  else{
+    OFF.rows.push({codice:c.codice||'',brand:c.brand||'',nome:c.nome||'',modello:c.modello||'',
+      descr:(c.brand?c.brand+' \u2014 ':'')+(c.nome||''),qty:1,prezzo:Number(c.prezzo)||0,sconto:0,catId:c.id});
+  }
+  offRender();
+}
+
+/* ── righe ── */
+function offRender(){
+  var tb=document.getElementById('off-tbody');
+  if(!tb)return;
+  if(!OFF.rows.length){
+    tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#8b8a86;padding:20px">Offerta vuota: aggiungi prodotti dal catalogo o importa un Excel.</td></tr>';
+  }else{
+    tb.innerHTML=OFF.rows.map(function(r,i){
+      function inp(f,v,type,w){
+        return '<input class="pgc-inline" style="min-width:0;width:'+(w||'100%')+'" type="'+(type||'text')+'" value="'+offEsc(v)+'" onchange="offUpd('+i+',\''+f+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()">';
+      }
+      return '<tr>'+
+        '<td style="color:#8b8a86">'+(i+1)+'</td>'+
+        '<td>'+inp('codice',r.codice)+'</td>'+
+        '<td>'+inp('descr',r.descr)+'</td>'+
+        '<td>'+inp('modello',r.modello)+'</td>'+
+        '<td>'+inp('qty',r.qty,'number')+'</td>'+
+        '<td>'+inp('prezzo',r.prezzo,'number')+'</td>'+
+        '<td>'+inp('sconto',r.sconto,'number')+'</td>'+
+        '<td style="text-align:right;font-weight:600;white-space:nowrap">'+offEur(offRowTot(r))+'</td>'+
+        '<td style="text-align:right"><button class="pgc-abtn del" title="Rimuovi riga" onclick="offDel('+i+')">\ud83d\uddd1</button></td>'+
+      '</tr>';
+    }).join('');
+  }
+  var tot=OFF.rows.reduce(function(s,r){return s+offRowTot(r);},0);
+  var te=document.getElementById('off-tot');
+  if(te)te.textContent=offEur(tot);
+}
+function offUpd(i,f,v){
+  var r=OFF.rows[i]; if(!r)return;
+  if(f==='qty'||f==='prezzo'||f==='sconto'){r[f]=parseFloat(String(v).replace(',','.'))||0;}
+  else r[f]=v;
+  offRender();
+}
+function offDel(i){OFF.rows.splice(i,1);offRender();}
+function offClear(){
+  if(OFF.rows.length&&!confirm('Svuotare l\u0027offerta corrente?'))return;
+  OFF={rows:[],cloudId:null,nome:'Nuova offerta'};
+  var ne=document.getElementById('off-nome'); if(ne)ne.value=OFF.nome;
+  offRender();
+}
+
+/* ── import Excel (stessa filosofia di Disegno/Piano di carico) ── */
+function offImportExcel(ev){
+  var f=ev.target.files&&ev.target.files[0];
+  ev.target.value='';
+  if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(e){
+    try{
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      var res=offParseExcelRows(rows);
+      if(!res.rows.length){alert('Nessuna riga riconosciuta nel file.');return;}
+      res.rows.forEach(function(r){OFF.rows.push(r);});
+      offRender();
+      alert('\u2713 Importate '+res.rows.length+' righe'+(res.matched?' ('+res.matched+' agganciate al catalogo)':'')+'.');
+    }catch(err){
+      console.warn('offImportExcel:',err);
+      alert('Import non riuscito: '+err.message);
+    }
+  };
+  rd.readAsArrayBuffer(f);
+}
+/* separata e pura per i test: da matrice di celle a righe offerta */
+function offParseExcelRows(rows){
+  var hdrIdx=-1,ci=-1,qi=-1,pi=-1,di=-1,mi=-1;
+  for(var r=0;r<Math.min(rows.length,12);r++){
+    var row=rows[r].map(function(x){return String(x).toLowerCase().trim();});
+    var c=row.findIndex(function(x){return /^(codice|code|articolo|art\.?|item)$/.test(x)||/codice/.test(x);});
+    if(c>=0){
+      hdrIdx=r;ci=c;
+      qi=row.findIndex(function(x){return /^(q\.?t[a\u00e0]\.?|qta|quantit\u00e0|quantita|qty|pz|pezzi|n\.?)$/.test(x);});
+      pi=row.findIndex(function(x){return /prezzo|price|unit/.test(x);});
+      di=row.findIndex(function(x){return /descr/.test(x);});
+      mi=row.findIndex(function(x){return /^modello|model$/.test(x)||/modello/.test(x);});
+      break;
+    }
+  }
+  var out=[],matched=0;
+  var start=hdrIdx>=0?hdrIdx+1:0;
+  if(hdrIdx<0){ci=0;qi=1;}
+  for(var r2=start;r2<rows.length;r2++){
+    var row2=rows[r2];
+    var code=String(row2[ci]||'').trim();
+    if(!code)continue;
+    var qty=parseFloat(String(qi>=0?row2[qi]:'1').replace(',','.'))||1;
+    var cat=OFF_CAT.find(function(x){return x.codice&&String(x.codice).trim()===code;});
+    if(cat){
+      matched++;
+      out.push({codice:code,brand:cat.brand||'',nome:cat.nome||'',modello:cat.modello||'',
+        descr:(cat.brand?cat.brand+' \u2014 ':'')+(cat.nome||''),qty:qty,
+        prezzo:(pi>=0&&row2[pi]!=='')?(parseFloat(String(row2[pi]).replace(',','.'))||0):(Number(cat.prezzo)||0),
+        sconto:0,catId:cat.id});
+    }else{
+      out.push({codice:code,brand:'',nome:'',modello:mi>=0?String(row2[mi]||''):'',
+        descr:di>=0?String(row2[di]||''):'',qty:qty,
+        prezzo:pi>=0?(parseFloat(String(row2[pi]).replace(',','.'))||0):0,sconto:0});
+    }
+  }
+  return {rows:out,matched:matched};
+}
+
+/* ── PDF ── */
+function offPDF(){
+  if(!OFF.rows.length){alert('L\u0027offerta \u00e8 vuota.');return;}
+  var J=window.jspdf&&window.jspdf.jsPDF;
+  if(!J){alert('Libreria PDF non ancora caricata, riprova tra un istante.');return;}
+  var doc=new J({unit:'mm',format:'a4'});
+  doc.setFont('helvetica','bold');doc.setFontSize(16);
+  doc.text('TNK \u2014 The Nice Kitchen',14,16);
+  doc.setFontSize(12);doc.text('OFFERTA: '+OFF.nome,14,24);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);
+  doc.text('Data: '+new Date().toLocaleDateString('it-IT'),14,30);
+  var body=OFF.rows.map(function(r,i){
+    return [i+1,r.codice,r.descr,r.modello,String(r.qty),
+      (Number(r.prezzo)||0).toLocaleString('it-IT',{minimumFractionDigits:2}),
+      (Number(r.sconto)||0)?String(r.sconto)+'%':'\u2014',
+      offRowTot(r).toLocaleString('it-IT',{minimumFractionDigits:2})];
+  });
+  var tot=OFF.rows.reduce(function(s,r){return s+offRowTot(r);},0);
+  doc.autoTable({
+    startY:36,
+    head:[['#','Codice','Descrizione','Modello','Q.t\u00e0','Prezzo \u20ac','Sc.','Totale \u20ac']],
+    body:body,
+    foot:[[{content:'Totale',colSpan:7,styles:{halign:'right',fontStyle:'bold'}},
+      {content:tot.toLocaleString('it-IT',{minimumFractionDigits:2}),styles:{halign:'right',fontStyle:'bold'}}]],
+    styles:{font:'helvetica',fontSize:8,cellPadding:1.6},
+    headStyles:{fillColor:[13,122,95]},
+    columnStyles:{0:{cellWidth:8},4:{halign:'center',cellWidth:12},5:{halign:'right',cellWidth:20},6:{halign:'center',cellWidth:12},7:{halign:'right',cellWidth:22}}
+  });
+  doc.save('Offerta_'+OFF.nome.replace(/[^a-zA-Z0-9]+/g,'_')+'.pdf');
+}
+
+/* ── cloud: salvataggio/apertura dentro il progetto unificato {cucina,carico,offerta} ── */
+function offPayload(){
+  return {v:1,nome:OFF.nome,rows:OFF.rows,aggiornato:new Date().toISOString()};
+}
+async function offCloudSave(){
+  if(!OFF.rows.length){alert('L\u0027offerta \u00e8 vuota.');return;}
+  if(OFF.cloudId){await offMergeSave(OFF.cloudId);return;}
+  offPickProject('Salva offerta in\u2026',async function(id){
+    if(id==='__new__'){
+      try{
+        let u=null;try{u=localStorage.getItem('tnk_user')||null;}catch(e){}
+        const h=pgcHdr(true);h.Prefer='return=representation';
+        const r=await fetch(PGC_URL+'/rest/v1/progetti',{method:'POST',headers:h,
+          body:JSON.stringify({nome:OFF.nome,tipo:'progetto',dati:{offerta:offPayload()},
+            aggiornato:new Date().toISOString(),creato_da:u,aggiornato_da:u})});
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        const rows=await r.json();
+        OFF.cloudId=rows[0]&&rows[0].id;
+        alert('\u2713 Offerta salvata in un nuovo progetto.');
+      }catch(e){alert('Salvataggio non riuscito: '+e.message);}
+    }else{
+      await offMergeSave(id);
+      OFF.cloudId=id;
+    }
+  },true);
+}
+async function offMergeSave(id){
+  try{
+    let u=null;try{u=localStorage.getItem('tnk_user')||null;}catch(e){}
+    const g=await fetch(PGC_URL+'/rest/v1/progetti?id=eq.'+id+'&select=dati',{headers:pgcHdr()});
+    if(!g.ok)throw new Error('HTTP '+g.status);
+    const rows=await g.json();
+    const dati=(rows[0]&&rows[0].dati)||{};
+    dati.offerta=offPayload(); /* merge: preserva cucina e carico */
+    const r=await fetch(PGC_URL+'/rest/v1/progetti?id=eq.'+id,{method:'PATCH',headers:pgcHdr(true),
+      body:JSON.stringify({dati:dati,aggiornato:new Date().toISOString(),aggiornato_da:u})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    alert('\u2713 Offerta salvata sul cloud.');
+  }catch(e){alert('Salvataggio non riuscito: '+e.message);}
+}
+function offCloudOpen(){
+  offPickProject('Apri offerta da\u2026',async function(id){
+    try{
+      const g=await fetch(PGC_URL+'/rest/v1/progetti?id=eq.'+id+'&select=id,nome,dati',{headers:pgcHdr()});
+      if(!g.ok)throw new Error('HTTP '+g.status);
+      const rows=await g.json();
+      const p=rows[0];if(!p)return;
+      const o=(p.dati&&p.dati.offerta)||null;
+      OFF.cloudId=p.id;
+      OFF.nome=(o&&o.nome)||p.nome||'Offerta';
+      OFF.rows=(o&&Array.isArray(o.rows))?o.rows:[];
+      var ne=document.getElementById('off-nome');if(ne)ne.value=OFF.nome;
+      offRender();
+      if(!o)alert('Il progetto non contiene ancora un\u0027offerta: partirai da zero, il salvataggio la aggiunger\u00e0 al progetto.');
+    }catch(e){alert('Apertura non riuscita: '+e.message);}
+  },false);
+}
+async function offPickProject(title,cb,withNew){
+  document.getElementById('off-cloud-title').textContent=title;
+  var list=document.getElementById('off-cloud-list');
+  list.innerHTML='<div style="color:#8b8a86;font-size:12px;padding:10px">Caricamento\u2026</div>';
+  document.getElementById('off-cloud-modal').style.display='flex';
+  try{
+    const r=await fetch(PGC_URL+'/rest/v1/progetti?select=id,nome,cliente,aggiornato&order=aggiornato.desc&limit=100',{headers:pgcHdr()});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const rows=await r.json();
+    var h='';
+    if(withNew)h+='<div class="addr-item" style="font-weight:700" onclick="offPickGo(\'__new__\')">\u2795 Nuovo progetto \u201c'+offEsc(OFF.nome)+'\u201d</div>';
+    h+=rows.map(function(p){
+      return '<div class="addr-item" onclick="offPickGo(\''+p.id+'\')">'+
+        '<b>'+offEsc(p.nome||'Senza nome')+'</b>'+
+        (p.cliente?' <span style="color:#8b8a86">\u2014 '+offEsc(p.cliente)+'</span>':'')+
+        ' <span style="color:#8b8a86;font-size:11px;float:right">'+pgcFmt(p.aggiornato)+'</span></div>';
+    }).join('');
+    list.innerHTML=h||'<div style="color:#8b8a86;font-size:12px;padding:10px">Nessun progetto.</div>';
+    window._offPickCb=cb;
+  }catch(e){
+    list.innerHTML='<div style="color:#b91c1c;font-size:12px;padding:10px">\u2717 Errore di rete.</div>';
+  }
+}
+function offPickGo(id){
+  document.getElementById('off-cloud-modal').style.display='none';
+  if(window._offPickCb)window._offPickCb(id);
+}
+
+/* ── trasferimenti verso Disegno e Piano di carico (stessi canali degli import esistenti) ── */
+function offExpandItems(){
+  var items=[],n=0;
+  OFF.rows.forEach(function(r){
+    var q=Math.max(1,Math.round(Number(r.qty)||1));
+    for(var k=0;k<q&&n<300;k++){n++;
+      items.push(r);
+    }
+  });
+  return items;
+}
+function offToDisegno(){
+  if(!OFF.rows.length){alert('L\u0027offerta \u00e8 vuota.');return;}
+  var items=offExpandItems().map(function(r){
+    var cat=r.catId?OFF_CAT.find(function(x){return x.id===r.catId;}):null;
+    return {code:r.codice,model:r.modello,kg:cat?(Number(cat.peso_netto_kg)||0):0};
+  });
+  try{localStorage.setItem('tnk_ck_import',JSON.stringify({progetto:OFF.nome,cloudId:OFF.cloudId,items:items}));}catch(e){}
+  go('cucina3d');
+}
+function offToPianoCarico(){
+  if(!OFF.rows.length){alert('L\u0027offerta \u00e8 vuota.');return;}
+  var skipped=0;
+  var items=offExpandItems().map(function(r){
+    var cat=r.catId?OFF_CAT.find(function(x){return x.id===r.catId;}):null;
+    if(!cat){skipped++;return null;}
+    var imb=cat.larghezza_imballo_mm&&cat.profondita_imballo_mm&&cat.altezza_imballo_mm;
+    return {
+      l:imb?cat.larghezza_imballo_mm:cat.l, p:imb?cat.profondita_imballo_mm:cat.p, h:imb?cat.altezza_imballo_mm:cat.h,
+      brand:cat.brand||'', nome:cat.nome||r.descr, model:r.modello, code:r.codice,
+      kg:Number(cat.peso_lordo_kg)||Number(cat.peso_netto_kg)||0, imballo:!!imb
+    };
+  }).filter(Boolean);
+  if(!items.length){alert('Nessuna riga agganciata al catalogo: per il piano di carico servono le dimensioni.');return;}
+  try{localStorage.setItem('tnk_pc_import',JSON.stringify({progetto:OFF.nome,cloudId:OFF.cloudId,items:items}));}catch(e){}
+  if(skipped)alert(skipped+' righe senza aggancio al catalogo non verranno trasferite (mancano le dimensioni).');
+  go('pianocarico');
 }
 
 function modelli3D(){
