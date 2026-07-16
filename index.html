@@ -1152,6 +1152,21 @@ function offRender(){
 function offUpd(i,f,v){
   var r=OFF.rows[i]; if(!r)return;
   if(f==='qty'||f==='prezzo'||f==='sconto'){r[f]=parseFloat(String(v).replace(',','.'))||0;}
+  else if(f==='codice'){
+    r.codice=String(v).trim();
+    /* prezzo e anagrafica compilati in automatico dal database */
+    var cat=OFF_CAT.find(function(x){return x.codice&&String(x.codice).trim()===r.codice;});
+    if(cat){
+      r.catId=cat.id;
+      r.prezzo=Number(cat.prezzo)||0;
+      r.brand=cat.brand||'';
+      r.nome=cat.nome||'';
+      r.modello=cat.modello||'';
+      r.descr=(cat.brand?cat.brand+' \u2014 ':'')+(cat.nome||'');
+    }else{
+      r.catId=null;
+    }
+  }
   else r[f]=v;
   offRender();
 }
@@ -1214,7 +1229,7 @@ function offParseExcelRows(rows){
       matched++;
       out.push({codice:code,brand:cat.brand||'',nome:cat.nome||'',modello:cat.modello||'',
         descr:(cat.brand?cat.brand+' \u2014 ':'')+(cat.nome||''),qty:qty,
-        prezzo:(pi>=0&&row2[pi]!=='')?(parseFloat(String(row2[pi]).replace(',','.'))||0):(Number(cat.prezzo)||0),
+        prezzo:Number(cat.prezzo)||0, /* prezzo di listino dal database, sempre */
         sconto:0,catId:cat.id});
     }else{
       out.push({codice:code,brand:'',nome:'',modello:mi>=0?String(row2[mi]||''):'',
