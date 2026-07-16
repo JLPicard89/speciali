@@ -608,6 +608,7 @@ async function initProgettiCloud(){
         <td style="white-space:nowrap;text-align:right">
           <button class="pgc-abtn" title="Apri nel Disegno" onclick="pgcOpenCK('${p.id}')">\ud83d\udcd0</button>
           <button class="pgc-abtn" title="Apri nel piano di carico" onclick="pgcOpenPC('${p.id}')">\ud83d\ude9a</button>
+          <button class="pgc-abtn" title="Apri in ambiente Offerta" onclick="pgcOpenOff('${p.id}')">\ud83d\udcc4</button>
           <button class="pgc-abtn del" title="Elimina progetto" onclick="pgcDelete('${p.id}','${(p.nome||'').replace(/'/g,"&#39;")}')">\ud83d\uddd1</button>
         </td>
       </tr>`;
@@ -736,6 +737,10 @@ function pgcOpenCK(id){
 function pgcOpenPC(id){
   try{localStorage.setItem('tnk_pc_open_id',id);}catch(e){}
   go('pianocarico');
+}
+function pgcOpenOff(id){
+  try{localStorage.setItem('tnk_off_open_id',id);}catch(e){}
+  go('offerta');
 }
 
 async function pgcDelete(id,nome){
@@ -1048,6 +1053,13 @@ async function initOfferta(){
       const r=await fetch(PGC_URL+'/rest/v1/catalogo?select='+cols+'&order=brand.asc,nome.asc&limit=1000',{headers:pgcHdr()});
       if(r.ok)OFF_CAT=await r.json();
     }catch(e){console.warn('catalogo offerta:',e);}
+  }
+  /* apertura diretta dalla pagina Progetti */
+  var openId=null;
+  try{openId=localStorage.getItem('tnk_off_open_id');}catch(e){}
+  if(openId){
+    try{localStorage.removeItem('tnk_off_open_id');}catch(e){}
+    await offLoadProject(openId,true);
   }
   offConsumeTransfer(); /* dopo il catalogo: le righe in arrivo si arricchiscono dal listino */
 }
@@ -1427,24 +1439,25 @@ async function offMergeSave(id){
     alert('\u2713 Offerta salvata sul cloud.');
   }catch(e){alert('Salvataggio non riuscito: '+e.message);}
 }
+async function offLoadProject(id,quiet){
+  try{
+    const g=await fetch(PGC_URL+'/rest/v1/progetti?id=eq.'+id+'&select=id,nome,cliente,commerciale,dati',{headers:pgcHdr()});
+    if(!g.ok)throw new Error('HTTP '+g.status);
+    const rows=await g.json();
+    const p=rows[0];if(!p)return;
+    const o=(p.dati&&p.dati.offerta)||null;
+    OFF.cloudId=p.id;
+    OFF.nome=(o&&o.nome)||p.nome||'Offerta';
+    OFF.rows=(o&&Array.isArray(o.rows))?o.rows:[];
+    OFF.cliente=p.cliente||'';
+    OFF.commerciale=p.commerciale||'';
+    var ne=document.getElementById('off-nome');if(ne)ne.value=OFF.nome;
+    offRender();
+    if(!o&&!quiet)alert('Il progetto non contiene ancora un\u0027offerta: partirai da zero, il salvataggio la aggiunger\u00e0 al progetto.');
+  }catch(e){alert('Apertura non riuscita: '+e.message);}
+}
 function offCloudOpen(){
-  offPickProject('Apri offerta da\u2026',async function(id){
-    try{
-      const g=await fetch(PGC_URL+'/rest/v1/progetti?id=eq.'+id+'&select=id,nome,cliente,commerciale,dati',{headers:pgcHdr()});
-      if(!g.ok)throw new Error('HTTP '+g.status);
-      const rows=await g.json();
-      const p=rows[0];if(!p)return;
-      const o=(p.dati&&p.dati.offerta)||null;
-      OFF.cloudId=p.id;
-      OFF.nome=(o&&o.nome)||p.nome||'Offerta';
-      OFF.rows=(o&&Array.isArray(o.rows))?o.rows:[];
-      OFF.cliente=p.cliente||'';
-      OFF.commerciale=p.commerciale||'';
-      var ne=document.getElementById('off-nome');if(ne)ne.value=OFF.nome;
-      offRender();
-      if(!o)alert('Il progetto non contiene ancora un\u0027offerta: partirai da zero, il salvataggio la aggiunger\u00e0 al progetto.');
-    }catch(e){alert('Apertura non riuscita: '+e.message);}
-  },false);
+  offPickProject('Apri offerta da\u2026',function(id){offLoadProject(id,false);},false);
 }
 async function offPickProject(title,cb,withNew){
   document.getElementById('off-cloud-title').textContent=title;
