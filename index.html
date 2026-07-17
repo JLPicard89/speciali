@@ -1068,7 +1068,7 @@ async function offLoadCatalog(){
   if(OFF_CAT_STATE==='ready'&&OFF_CAT.length)return;
   OFF_CAT_STATE='loading';offCatStatus();
   try{
-    const cols='id,brand,gamma,categoria,nome,modello,codice,prezzo,l,p,h,peso_netto_kg,peso_lordo_kg,larghezza_imballo_mm,profondita_imballo_mm,altezza_imballo_mm';
+    const cols='id,brand,gamma,categoria,nome,modello,codice,prezzo,l,p,h,peso_netto_kg,peso_lordo_kg,larghezza_imballo_mm,profondita_imballo_mm,altezza_imballo_mm,descrizione_estesa,descrizione_listino';
     var all=[],from=0;
     for(;;){
       const h=Object.assign({Range:from+'-'+(from+999)},pgcHdr());
@@ -1388,7 +1388,18 @@ function offPDF(){
 
   /* blocchi prodotto in stile template: banda grigia con Pos rosso + totale, poi dettagli */
   OFF.rows.forEach(function(r,idx){
-    var blockH=21;
+    /* descrizione lunga dal listino (come LongDescription nel template) */
+    var cat=null;
+    if(r.catId)cat=OFF_CAT.find(function(x){return x.id===r.catId;});
+    if(!cat&&r.codice)cat=OFF_CAT.find(function(x){return x.codice&&String(x.codice).trim()===String(r.codice).trim();});
+    var dlraw=cat?(cat.descrizione_estesa||cat.descrizione_listino||''):'';
+    var dl=[];
+    if(dlraw){
+      doc.setFontSize(7.8);
+      dl=doc.splitTextToSize(String(dlraw).replace(/\s+/g,' ').trim(),CW-8);
+      if(dl.length>8){dl=dl.slice(0,8);dl[7]=dl[7].replace(/\s*\S*$/,'')+' \u2026';}
+    }
+    var blockH=21+(dl.length?dl.length*3.1+1.5:0);
     need(blockH+2);
     /* banda (sPos su LightGray, totale a destra) */
     doc.setFillColor.apply(doc,OFF_TPL.lightgray);
@@ -1421,6 +1432,13 @@ function offPDF(){
       ((Number(r.sconto)||0)?('    Sconto: '+r.sconto+'%'):'');
     doc.text(q,W-MR-2,y+2.6,{align:'right'});
     y+=6.2;
+    if(dl.length){
+      doc.setFontSize(7.8);doc.setFont('helvetica','normal');
+      doc.setTextColor.apply(doc,OFF_TPL.muted);
+      dl.forEach(function(line){doc.text(line,ML+2,y+2.2);y+=3.1;});
+      doc.setTextColor.apply(doc,OFF_TPL.ink);
+      y+=1.5;
+    }
     doc.setDrawColor.apply(doc,OFF_TPL.gainsboro);doc.setLineWidth(0.2);
     doc.line(ML,y,W-MR,y);
     y+=2.4;
