@@ -1472,191 +1472,330 @@ function offParseExcelRows(rows){
 
 /* ── PDF: layout replicato dal template FastReport rpt_Offer-TNK-right_CV ──
    unita' frx: 37.8 = 1cm · accento rosso 192,0,0 · bande grigie · Helvetica/thin */
+/* ── PDF: layout replicato dall'offerta reale TNK (EX2510217-M25-00187) ── */
 var OFF_TPL={
-  red:[192,0,0], silver:[192,192,192], lightgray:[211,211,211],
-  gainsboro:[220,220,220], darkgray:[169,169,169], ink:[28,27,25], muted:[110,110,110],
-  logo:null /* dataURL PNG del banner: se impostato, sostituisce il marchio testuale */
+  red:[192,0,0], band:[200,200,200], bandDark:[169,169,169], zone:[214,214,214],
+  ink:[28,27,25], muted:[120,120,120], line:[190,190,190],
+  logo:null, /* dataURL PNG: se impostato sostituisce il logo disegnato */
+  condizioni:[
+    ['PREZZI:','I prezzi indicati sono da considerarsi NETTI (Iva esclusa)'],
+    ['TERMINI DI CONSEGNA:','Da confermare, saranno indicati in conferma d\u0027ordine solo a seguito accettazione dell\u0027offerta stessa.'],
+    ['PAGAMENTO:','Come da vs. condizioni concordate.'],
+    ['VALIDITA\u0027 OFFERTA:','60 gg da data offerta'],
+    ['SPEDIZIONE:','Vs. carico'],
+    ['INSTALLAZIONE:','Vs. carico. Resta onere del committente predisporre correttamente gli allacciamenti idrici ed elettrici (i progetti esecutivi vi saranno rilasciati, se richiesti, solo dopo la conferma dell\u0027ordine);'],
+    ['GARANZIA:','La garanzia \u00e8 di 24 mesi sulle parti difettose da Noi dichiarate tali. Dopo il collaudo non saranno pi\u00f9 accettate contestazioni su difetti evidenti.'],
+    ['RESA MATERIALE IN GARANZIA:','F.co Ns. magazzino.']
+  ],
+  sedi:[
+    ['the Nice kitchen S.p.A','P.iva IT 05010710266','info@thenicekitchen.com','www.thenicekitchen.com'],
+    ['Sede Torreglia','Via E. Mattei, 38 - 35038','Padova - PD - Italy','T. +39 049 9903830'],
+    ['Sede Padova','Viale dell\u0027Industria, 62 - 35129','Padova - PD - Italy','T. +39 049 8075105'],
+    ['Sede San Vendemiano','Via Pal\u00f9, 93 - 31020','San Vendemiano - TV - Italy','T. +39 0438 7714']
+  ]
 };
 function offPDF(){
   if(!OFF.rows.length){alert('L\u0027offerta \u00e8 vuota.');return;}
   var J=window.jspdf&&window.jspdf.jsPDF;
   if(!J){alert('Libreria PDF non ancora caricata, riprova tra un istante.');return;}
   var doc=new J({unit:'mm',format:'a4'});
-  var W=210,H=297,ML=12,MR=12,MT=10,MB=18,CW=W-ML-MR;
+  var W=210,H=297,ML=13,MR=13,MT=10,FB=27,CW=W-ML-MR;
+  var LCW=120; /* larghezza colonna sinistra dei blocchi prodotto */
   var y=0,page=1;
   function eur(n){return (Number(n)||0).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function T(){return (OFF.testata||[]);}
+  function tf(k){var f=T().find(function(x){return String(x.k).toLowerCase()===k;});return f?String(f.v||''):'';}
+  function tprint(k){var f=T().find(function(x){return String(x.k).toLowerCase()===k;});return f?!!f.print:false;}
 
-  function header(first){
-    /* banner a destra (template "right"): marchio o logo */
+  function header(){
+    /* logo TNK in alto a sinistra */
     if(OFF_TPL.logo){
-      try{doc.addImage(OFF_TPL.logo,'PNG',W-MR-56,MT,56,15);}catch(e){}
+      try{doc.addImage(OFF_TPL.logo,'PNG',ML,MT,26,20);}catch(e){}
     }else{
-      doc.setTextColor.apply(doc,OFF_TPL.ink);
+      doc.setDrawColor.apply(doc,OFF_TPL.ink);doc.setLineWidth(0.7);
+      doc.rect(ML,MT,17,13);
       doc.setFont('helvetica','bold');doc.setFontSize(15);
-      doc.text('TNK',W-MR,MT+7,{align:'right'});
-      doc.setFont('helvetica','normal');doc.setFontSize(8);
-      doc.setTextColor.apply(doc,OFF_TPL.muted);
-      doc.text('the nice kitchen',W-MR,MT+11.5,{align:'right'});
+      doc.setTextColor.apply(doc,OFF_TPL.ink);
+      doc.text('TNK',ML+8.5,MT+9,{align:'center'});
+      doc.setFont('helvetica','bold');doc.setFontSize(8.5);
+      doc.text('the Nice kitchen',ML,MT+18.5);
     }
-    /* riga offerta + data (come lblOffer/txtOffer · lblDataOfferta) */
-    var yy=MT+22;
-    doc.setFontSize(9);doc.setFont('helvetica','normal');
+    /* riga offerta + data con doppio filetto */
+    var yy=MT+28;
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);
     doc.setTextColor.apply(doc,OFF_TPL.muted);
-    doc.text('Offerta:',ML,yy);
-    doc.setTextColor.apply(doc,OFF_TPL.ink);doc.setFontSize(10);
-    doc.text(String(OFF.nome||''),ML+16,yy);
-    doc.setFontSize(9);doc.setTextColor.apply(doc,OFF_TPL.muted);
-    doc.text('Data offerta:',W-MR-24,yy,{align:'right'});
-    doc.setTextColor.apply(doc,OFF_TPL.ink);doc.setFontSize(10);
-    doc.text(new Date().toLocaleDateString('it-IT'),W-MR,yy,{align:'right'});
-    doc.setDrawColor.apply(doc,OFF_TPL.darkgray);doc.setLineWidth(0.3);
-    doc.line(ML,yy+3,W-MR,yy+3);
-    y=yy+8;
-    if(first){
-      /* testata offerta in alto a sinistra: tutti i campi flaggati "stampa" */
-      var tst=(OFF.testata||[]).filter(function(f){return f.print&&String(f.v||'').trim();});
-      if(tst.length){
-        y+=1;
-        tst.forEach(function(f){
-          doc.setFontSize(8.2);doc.setFont('helvetica','normal');
-          doc.setTextColor.apply(doc,OFF_TPL.muted);
-          doc.text(String(f.k||'')+':',ML,y+2.6);
-          doc.setFontSize(9.6);
-          var bold=(String(f.k).toLowerCase()==='cliente');
-          doc.setFont('helvetica',bold?'bold':'normal');
-          doc.setTextColor.apply(doc,OFF_TPL.ink);
-          var lines=doc.splitTextToSize(String(f.v),108);
-          doc.text(lines,ML+30,y+2.6);
-          y+=Math.max(1,lines.length)*4.6+0.6;
-        });
-        doc.setFont('helvetica','normal');
-        y+=3;
-      }
-    }
+    doc.text('Offerta:',ML+1,yy);
+    doc.setFont('helvetica','bold');doc.setFontSize(9.5);
+    doc.setTextColor.apply(doc,OFF_TPL.ink);
+    doc.text(String(OFF.nome||''),ML+15,yy);
+    doc.text(new Date().toLocaleDateString('it-IT'),W-MR-1,yy,{align:'right'});
+    doc.setDrawColor.apply(doc,OFF_TPL.ink);doc.setLineWidth(0.5);
+    doc.line(ML,yy+2.4,W-MR,yy+2.4);
+    y=yy+9;
   }
   function footer(){
-    doc.setDrawColor.apply(doc,OFF_TPL.gainsboro);doc.setLineWidth(0.3);
-    doc.line(ML,H-MB+4,W-MR,H-MB+4);
-    doc.setFontSize(7.5);doc.setFont('helvetica','normal');
-    doc.setTextColor.apply(doc,OFF_TPL.muted);
-    doc.text('TNK \u2014 The Nice Kitchen',ML,H-MB+8.5);
-    doc.text('Pagina '+page,W-MR,H-MB+8.5,{align:'right'});
-  }
-  function need(h){
-    if(y+h>H-MB){footer();doc.addPage();page++;header(false);}
-  }
-
-  header(true);
-
-  /* blocchi prodotto in stile template: banda grigia con Pos rosso + totale, poi dettagli */
-  var _pn=0;
-  offGroups().forEach(function(gp){
-    var grows=[];
-    OFF.rows.forEach(function(r){if(offPathNorm(r.path||'')===gp)grows.push(r);});
-    if(gp&&grows.length===0)return; /* aree vuote non stampate */
-    if(gp){
-      var parts=gp.split(' / ');
-      var depth=parts.length;
-      need(9);
-      if(depth===1){
-        doc.setFillColor.apply(doc,OFF_TPL.gainsboro);
-        doc.rect(ML,y,CW,6.4,'F');
-        doc.setFont('helvetica','bold');doc.setFontSize(10.5);
-        doc.setTextColor.apply(doc,OFF_TPL.red);
-        doc.text(parts[0].toUpperCase(),ML+2,y+4.5);
-        y+=8;
-      }else{
-        doc.setFont('helvetica','bold');doc.setFontSize(depth===2?9.6:8.8);
-        doc.setTextColor.apply(doc,OFF_TPL.ink);
-        doc.text(parts[parts.length-1],ML+2+(depth-1)*5,y+4);
-        y+=6;
-      }
+    var fy=H-FB+6;
+    var colX=[ML,ML+46,ML+92,ML+138];
+    doc.setTextColor.apply(doc,OFF_TPL.ink);
+    OFF_TPL.sedi.forEach(function(col,i){
+      doc.setFont('helvetica','bold');doc.setFontSize(6.6);
+      doc.text(col[0],colX[i],fy);
+      doc.setFont('helvetica','normal');doc.setFontSize(6.2);
+      doc.setTextColor.apply(doc,OFF_TPL.muted);
+      for(var r=1;r<col.length;r++)doc.text(col[r],colX[i],fy+2.7*r);
       doc.setTextColor.apply(doc,OFF_TPL.ink);
-    }
-    grows.forEach(function(r){
+    });
+    doc.setFont('helvetica','normal');doc.setFontSize(8);
+    doc.setTextColor.apply(doc,OFF_TPL.muted);
+    doc.text('Pagina',W-MR-6,fy+8,{align:'right'});
+    doc.setFont('helvetica','bold');doc.setTextColor.apply(doc,OFF_TPL.ink);
+    doc.text(String(page),W-MR,fy+8,{align:'right'});
+  }
+  function newPage(){footer();doc.addPage();page++;header();}
+  function need(h){if(y+h>H-FB-2)newPage();}
+
+  /* ═══ COPERTINA ═══ */
+  header();
+  var u=null;try{u=localStorage.getItem('tnk_user')||null;}catch(e){}
+  var comm=tf('commerciale')||OFF.commerciale||'';
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);
+  doc.setTextColor.apply(doc,OFF_TPL.muted);
+  doc.text('RESP. COMMERCIALE:',ML+1,y+4);
+  doc.text('OPERATORE:',ML+1,y+9.5);
+  doc.setFont('helvetica','bold');doc.setFontSize(9);
+  doc.setTextColor.apply(doc,OFF_TPL.ink);
+  if(comm)doc.text(comm.toUpperCase(),ML+40,y+4);
+  if(u)doc.text(String(u).toUpperCase(),ML+40,y+9.5);
+  y+=24;
+  /* Spett.le + campi testata flaggati */
+  doc.setFont('helvetica','normal');doc.setFontSize(10.5);
+  doc.setTextColor.apply(doc,OFF_TPL.ink);
+  doc.text('Spett.le',ML+1,y);
+  y+=6.5;
+  var cliente=tf('cliente')||OFF.cliente||'';
+  if(cliente&&tprint('cliente')!==false){
+    doc.setFont('helvetica','bold');doc.setFontSize(10.5);
+    doc.text(cliente.toUpperCase(),ML+1,y);
+    y+=6;
+  }
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  T().forEach(function(f){
+    var k=String(f.k).toLowerCase();
+    if(k==='cliente'||k==='commerciale')return;
+    if(!f.print||!String(f.v||'').trim())return;
+    var pre=(k==='indirizzo'||k==='nazione')?'':(f.k+': ');
+    var lines=doc.splitTextToSize(pre+f.v,150);
+    doc.text(lines,ML+1,y);
+    y+=lines.length*5.2;
+  });
+  y+=14;
+  doc.setFontSize(10);doc.setTextColor.apply(doc,OFF_TPL.ink);
+  doc.text('Alla cortese attenzione di:',ML+1,y);
+  y+=16;
+  doc.setFont('helvetica','bold');doc.setFontSize(10.5);
+  doc.text('OGGETTO:',ML+1,y);
+  var og=String(OFF.nome||'');
+  doc.text(og,ML+32,y);
+  var ogw=doc.getTextWidth(og);
+  doc.setLineWidth(0.5);doc.setDrawColor.apply(doc,OFF_TPL.ink);
+  doc.line(ML+1,y+1.4,ML+1+doc.getTextWidth('OGGETTO:'),y+1.4);
+  doc.line(ML+32,y+1.4,ML+32+ogw,y+1.4);
+  newPage();
+
+  /* ═══ PRODOTTI PER ZONA ═══ */
+  var groups=offGroups();
+  var zones=[],zseen={};
+  groups.forEach(function(gp){
+    var z=gp?gp.split(' / ')[0]:'';
+    if(zseen[z]===undefined){zseen[z]=zones.length;zones.push({name:z,paths:[]});}
+    zones[zseen[z]].paths.push(gp);
+  });
+  var _pn=0;
+  function catOf(r){
+    var c=null;
+    if(r.catId)c=OFF_CAT.find(function(x){return x.id===r.catId;});
+    if(!c&&r.codice)c=OFF_CAT.find(function(x){return x.codice&&String(x.codice).trim()===String(r.codice).trim();});
+    return c;
+  }
+  function drawRow(r){
     _pn++;
-    /* descrizione lunga dal listino (come LongDescription nel template) */
-    var cat=null;
-    if(r.catId)cat=OFF_CAT.find(function(x){return x.id===r.catId;});
-    if(!cat&&r.codice)cat=OFF_CAT.find(function(x){return x.codice&&String(x.codice).trim()===String(r.codice).trim();});
+    var cat=catOf(r);
     var dlraw=cat?(cat.descrizione_estesa||cat.descrizione_listino||''):'';
     var dl=[];
     if(dlraw){
-      doc.setFontSize(7.8);
-      dl=doc.splitTextToSize(String(dlraw).replace(/\s+/g,' ').trim(),CW-8);
-      if(dl.length>8){dl=dl.slice(0,8);dl[7]=dl[7].replace(/\s*\S*$/,'')+' \u2026';}
+      doc.setFontSize(7.6);
+      dl=doc.splitTextToSize(String(dlraw).replace(/\s+/g,' ').trim(),LCW);
+      if(dl.length>9){dl=dl.slice(0,9);dl[8]=dl[8].replace(/\s*\S*$/,'')+' \u2026';}
     }
-    var blockH=21+(dl.length?dl.length*3.1+1.5:0);
-    need(blockH+2);
-    /* banda (sPos su LightGray, totale a destra) */
-    doc.setFillColor.apply(doc,OFF_TPL.lightgray);
-    doc.rect(ML,y,CW,6.2,'F');
-    doc.setFont('helvetica','bold');doc.setFontSize(10.5);
+    var titolo=String(r.descr||r.nome||'Articolo').replace(/^[^\u2014]*\u2014\s*/,'').toUpperCase();
+    doc.setFont('helvetica','bold');doc.setFontSize(10);
+    var tl=doc.splitTextToSize(titolo,LCW);
+    var hasDims=!!(cat&&cat.l&&cat.p&&cat.h);
+    var hasVol=hasDims, hasKg=!!(cat&&(cat.peso_lordo_kg||cat.peso_netto_kg));
+    var bh=7+tl.length*4.6+5+(hasDims?4.6:0)+((hasVol||hasKg)?4.6:0)+(dl.length?dl.length*3+2:0)+11;
+    need(bh+3);
+    /* riga posizione + prezzi a destra */
+    doc.setFillColor.apply(doc,OFF_TPL.band);
+    doc.rect(ML,y,26,5.4,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(9.5);
     doc.setTextColor.apply(doc,OFF_TPL.red);
-    doc.text(String(r.pos||String(_pn).padStart(2,'0')),ML+2,y+4.4);
+    doc.text(String(r.pos||_pn),ML+13,y+3.9,{align:'center'});
     doc.setTextColor.apply(doc,OFF_TPL.ink);
-    doc.text('\u20ac '+eur(offRowTot(r)),W-MR-2,y+4.4,{align:'right'});
-    /* descrizione */
-    doc.setFontSize(10.5);
-    var _posW=doc.getTextWidth(String(r.pos||String(_pn).padStart(2,'0')))+4;
-    var descr=doc.splitTextToSize(String(r.descr||r.nome||'Articolo'),CW-60-_posW);
-    doc.text(descr[0]||'',ML+2+_posW,y+4.4);
-    y+=8.4;
-    /* Modello / Codice (etichette thin) */
+    doc.setFontSize(9.8);
+    doc.text('\u20ac',W-MR-64,y+3.9);
+    doc.text(eur(r.prezzo),W-MR-38,y+3.9,{align:'right'});
     doc.setFont('helvetica','normal');doc.setFontSize(8.2);
     doc.setTextColor.apply(doc,OFF_TPL.muted);
-    doc.text('Modello:',ML+2,y+2.6);
-    doc.text('Codice:',ML+72,y+2.6);
-    doc.setFontSize(9.5);doc.setTextColor.apply(doc,OFF_TPL.ink);
-    doc.text(String(r.modello||'\u2014'),ML+16,y+2.6);
-    doc.text(String(r.codice||'\u2014'),ML+85,y+2.6);
-    y+=5.4;
-    /* Marchio + quantita'/prezzi */
-    doc.setFontSize(8.2);doc.setTextColor.apply(doc,OFF_TPL.muted);
-    doc.text('Marchio:',ML+2,y+2.6);
-    doc.setFontSize(9);doc.setTextColor.apply(doc,OFF_TPL.ink);
-    doc.text(String(r.brand||'\u2014'),ML+16,y+2.6);
-    var q='Q.t\u00e0: '+(Number(r.qty)||0)+'    Prezzo unit.: \u20ac '+eur(r.prezzo)+
-      ((Number(r.sconto)||0)?('    Sconto: '+r.sconto+'%'):'');
-    doc.text(q,W-MR-2,y+2.6,{align:'right'});
-    y+=6.2;
-    if(dl.length){
-      doc.setFontSize(7.8);doc.setFont('helvetica','normal');
+    doc.text('NR',W-MR-32,y+3.9);
+    doc.setFont('helvetica','bold');doc.setFontSize(9.8);
+    doc.setTextColor.apply(doc,OFF_TPL.ink);
+    doc.text(String(Number(r.qty)||0),W-MR-24,y+3.9);
+    doc.text(eur(offRowTot(r)),W-MR,y+3.9,{align:'right'});
+    y+=6.6;
+    /* filetto nero + titolo */
+    doc.setDrawColor.apply(doc,OFF_TPL.ink);doc.setLineWidth(0.5);
+    doc.line(ML,y-0.8,ML+LCW,y-0.8);
+    doc.setFont('helvetica','bold');doc.setFontSize(10);
+    doc.text(tl,ML,y+3.6);
+    y+=tl.length*4.6+1.6;
+    /* modello / dati tecnici dal catalogo */
+    doc.setFont('helvetica','normal');doc.setFontSize(8.2);
+    doc.setTextColor.apply(doc,OFF_TPL.muted);
+    doc.text('Modello:',ML,y+2.6);
+    doc.setFont('helvetica','bold');doc.setFontSize(9);
+    doc.setTextColor.apply(doc,OFF_TPL.ink);
+    doc.text(String(r.modello||r.codice||'\u2014'),ML+15,y+2.6);
+    y+=4.8;
+    if(hasDims){
+      doc.setFont('helvetica','normal');doc.setFontSize(8.2);
       doc.setTextColor.apply(doc,OFF_TPL.muted);
-      dl.forEach(function(line){doc.text(line,ML+2,y+2.2);y+=3.1;});
+      doc.text('Dimensioni Nette:',ML,y+2.6);
+      doc.setFont('helvetica','bold');doc.setFontSize(8.6);
       doc.setTextColor.apply(doc,OFF_TPL.ink);
-      y+=1.5;
+      doc.text(cat.l+' x'+cat.p+' x'+cat.h+' mm',ML+27,y+2.6);
+      y+=4.8;
     }
-    doc.setDrawColor.apply(doc,OFF_TPL.gainsboro);doc.setLineWidth(0.2);
-    doc.line(ML,y,W-MR,y);
-    y+=2.4;
+    if(hasVol||hasKg){
+      doc.setFont('helvetica','normal');doc.setFontSize(8.2);
+      doc.setTextColor.apply(doc,OFF_TPL.muted);
+      if(hasVol){
+        var vol=(cat.l*cat.p*cat.h/1e9);
+        doc.text('Volume:',ML,y+2.6);
+        doc.setFont('helvetica','bold');doc.setFontSize(8.6);
+        doc.setTextColor.apply(doc,OFF_TPL.ink);
+        doc.text(vol.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})+' m\u00b3',ML+13,y+2.6);
+      }
+      if(hasKg){
+        doc.setFont('helvetica','normal');doc.setFontSize(8.2);
+        doc.setTextColor.apply(doc,OFF_TPL.muted);
+        doc.text('Peso Lordo:',ML+62,y+2.6);
+        doc.setFont('helvetica','bold');doc.setFontSize(8.6);
+        doc.setTextColor.apply(doc,OFF_TPL.ink);
+        doc.text((Number(cat.peso_lordo_kg||cat.peso_netto_kg)||0)+' kg',ML+80,y+2.6);
+      }
+      y+=4.8;
+    }
+    if(dl.length){
+      doc.setFont('helvetica','normal');doc.setFontSize(7.6);
+      doc.setTextColor.apply(doc,OFF_TPL.muted);
+      doc.text(dl,ML,y+2.4);
+      y+=dl.length*3+2;
+    }
+    /* prezzo di listino + sconto riservato */
+    y+=2;
+    doc.setFont('helvetica','bold');doc.setFontSize(8.2);
+    doc.setTextColor.apply(doc,OFF_TPL.ink);
+    doc.text('Prezzo di Listino:',ML,y+2.6);
+    doc.setFont('helvetica','normal');
+    doc.text('\u20ac',ML+52,y+2.6);
+    doc.setFont('helvetica','bold');
+    doc.text(eur(r.prezzo),ML+75,y+2.6,{align:'right'});
+    y+=4.6;
+    doc.text('Sconto a Voi Riservato:',ML,y+2.6);
+    if(Number(r.sconto)>0){
+      doc.text(String(r.sconto).replace('.',',')+' %',ML+52,y+2.6);
+    }
+    y+=7;
+  }
+  zones.forEach(function(z){
+    var zrows=[];
+    z.paths.forEach(function(gp){
+      OFF.rows.forEach(function(r){if(offPathNorm(r.path||'')===gp)zrows.push({r:r,gp:gp});});
     });
+    if(!zrows.length)return;
+    if(z.name){
+      need(44); /* banda + inizio del primo blocco: mai orfana a fondo pagina */
+      doc.setFillColor.apply(doc,OFF_TPL.zone);
+      doc.rect(ML,y,CW,6.6,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(10);
+      doc.setTextColor.apply(doc,OFF_TPL.red);
+      doc.text(z.name.toUpperCase(),ML+11,y+4.7);
+      doc.setTextColor.apply(doc,OFF_TPL.ink);
+      y+=11;
+    }
+    var lastSub='';
+    zrows.forEach(function(e){
+      var sub=e.gp.split(' / ').slice(1).join(' / ');
+      if(sub&&sub!==lastSub){
+        need(38); /* intestazione sottoarea mai orfana */
+        doc.setFont('helvetica','bold');doc.setFontSize(8.8);
+        doc.setTextColor.apply(doc,OFF_TPL.ink);
+        doc.text(sub,ML+4,y+3.4);
+        y+=6;
+      }
+      lastSub=sub;
+      drawRow(e.r);
+    });
+    if(z.name){
+      var ztot=zrows.reduce(function(s,e){return s+offRowTot(e.r);},0);
+      need(11);
+      y+=1.5;
+      doc.setFillColor.apply(doc,OFF_TPL.bandDark);
+      doc.rect(ML,y,CW,6.4,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(9.5);
+      doc.setTextColor.apply(doc,OFF_TPL.ink);
+      doc.text('Totale Zona: '+z.name,ML+2,y+4.5);
+      doc.setFont('helvetica','normal');
+      doc.text('\u20ac',W-MR-42,y+4.5);
+      doc.setFont('helvetica','bold');
+      doc.text(eur(ztot),W-MR-2,y+4.5,{align:'right'});
+      y+=12;
+    }
   });
 
-  /* totali in stile GroupFooter: righe + banda silver del totale offerta */
-  var lordo=OFF.rows.reduce(function(s,r){return s+(Number(r.qty)||0)*(Number(r.prezzo)||0);},0);
-  var tot=OFF.rows.reduce(function(s,r){return s+offRowTot(r);},0);
-  var sconto=lordo-tot;
-  need(30);
-  y+=3;
-  doc.setFont('helvetica','bold');doc.setFontSize(9.7);
+  /* ═══ CONDIZIONI DI VENDITA + TOTALE ═══ */
+  newPage();
+  doc.setFillColor.apply(doc,OFF_TPL.zone);
+  doc.rect(ML,y,CW,6.2,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(9.5);
   doc.setTextColor.apply(doc,OFF_TPL.ink);
-  doc.text('Totale prodotti',W-MR-42,y+4,{align:'right'});
-  doc.text('\u20ac '+eur(lordo),W-MR,y+4,{align:'right'});
-  y+=6.5;
-  if(sconto>0.005){
-    doc.setFont('helvetica','italic');
-    doc.text('Totale sconti',W-MR-42,y+4,{align:'right'});
-    doc.text('\u2212 \u20ac '+eur(sconto),W-MR,y+4,{align:'right'});
-    y+=6.5;
-  }
-  /* banda silver (lblSupplier2 / txtTotalOffer) */
-  doc.setFillColor.apply(doc,OFF_TPL.silver);
-  doc.rect(ML,y,CW,8.6,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(12);
-  doc.text('TOTALE OFFERTA (IVA esclusa)',ML+2,y+6);
-  doc.text('\u20ac '+eur(tot),W-MR-2,y+6,{align:'right'});
-  y+=13;
+  doc.text('Condizioni di Vendita',ML+2,y+4.4);
+  y+=9.5;
+  OFF_TPL.condizioni.forEach(function(c){
+    doc.setFont('helvetica','bold');doc.setFontSize(8);
+    doc.setTextColor.apply(doc,OFF_TPL.ink);
+    doc.text(c[0],ML+1,y+3);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.6);
+    doc.setTextColor.apply(doc,OFF_TPL.muted);
+    var ln=doc.splitTextToSize(c[1],CW-62);
+    doc.text(ln,ML+60,y+3);
+    var rh=Math.max(1,ln.length)*3.3+3.4;
+    doc.setDrawColor.apply(doc,OFF_TPL.line);doc.setLineWidth(0.2);
+    doc.line(ML,y+rh,W-MR,y+rh);
+    y+=rh+2;
+  });
+  y+=14;
+  var tot=OFF.rows.reduce(function(s,r){return s+offRowTot(r);},0);
+  doc.setDrawColor.apply(doc,OFF_TPL.ink);doc.setLineWidth(0.6);
+  doc.setFillColor.apply(doc,OFF_TPL.zone);
+  doc.rect(ML,y,CW,8,'FD');
+  doc.setFont('helvetica','bold');doc.setFontSize(10.5);
+  doc.setTextColor.apply(doc,OFF_TPL.ink);
+  doc.text('Totale Offerta:',ML+2,y+5.6);
+  doc.setFont('helvetica','normal');
+  doc.text('\u20ac',W-MR-48,y+5.6);
+  doc.setFont('helvetica','bold');
+  doc.text(eur(tot),W-MR-2,y+5.6,{align:'right'});
   footer();
   doc.save('Offerta_'+String(OFF.nome||'offerta').replace(/[^a-zA-Z0-9]+/g,'_')+'.pdf');
 }
