@@ -1010,10 +1010,23 @@ async function cliDelete(id,nome){
 function offerta(){
   return `<div class="page pgc-page" style="max-width:none">
   <div class="ph" style="margin-bottom:14px"><div class="ph-title">Offerta</div></div>
+
+  <!-- SEZIONE TESTATA -->
+  <div class="pgc-card" style="margin-bottom:14px">
+    <div class="pgc-toolbar" style="justify-content:space-between">
+      <span style="font-weight:700;font-size:13px">\ud83e\uddfe Testata offerta</span>
+      <span style="display:flex;gap:8px">
+        <button class="pgc-btn" onclick="offTestAdd()">+ Campo</button>
+        <button class="pgc-btn" onclick="offTestReset()" title="Ricostruisce i campi dall\u0027anagrafica del cliente del progetto">\u21ba Da anagrafica</button>
+      </span>
+    </div>
+    <div style="padding:4px 14px 2px;font-size:11px;color:#8b8a86">Le modifiche valgono solo per questa offerta e non toccano l\u0027anagrafica. \u201cStampa\u201d include il campo nel PDF.</div>
+    <div id="off-test-list" style="padding:6px 14px 10px"></div>
+  </div>
+
   <div class="pgc-card">
     <div class="pgc-toolbar" style="justify-content:flex-start;flex-wrap:wrap">
       <input class="pgc-inline pgc-bold" id="off-nome" value="Nuova offerta" style="max-width:220px;border-color:#e3e2df;background:#fff" onchange="OFF.nome=this.value.trim()||'Nuova offerta'">
-      <button class="pgc-btn" onclick="offTestOpen()">\ud83e\uddfe Testata</button>
       <span style="flex:1"></span>
       <button class="pgc-btn" onclick="offCloudSave()">\ud83d\udcbe Salva</button>
       <button class="pgc-btn" onclick="offCloudOpen()">\ud83d\udcc2 Carica</button>
@@ -1051,24 +1064,19 @@ function offerta(){
     </div>
     <datalist id="off-aree"></datalist>
   </div>
-</div>
 
-<!-- MODAL: testata offerta -->
-<div id="off-test-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,25,.4);z-index:300;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:10px;width:min(620px,94vw);max-height:84vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.25)">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #e3e2df">
-      <span style="font-weight:700;font-size:14px">Testata offerta</span>
-      <button onclick="offTestClose()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8b8a86">\u2715</button>
+  <!-- SEZIONE CONDIZIONI DI VENDITA -->
+  <div class="pgc-card" style="margin-top:14px">
+    <div class="pgc-toolbar" style="justify-content:space-between">
+      <span style="font-weight:700;font-size:13px">\ud83d\udccb Condizioni di vendita</span>
+      <span style="display:flex;gap:8px">
+        <button class="pgc-btn" onclick="offCondAdd()">+ Condizione</button>
+        <button class="pgc-btn" onclick="offCondReset()" title="Ricarica le condizioni predefinite dal database">\u21ba Predefinite</button>
+        <button class="pgc-btn" onclick="offCondSaveDef()" title="Salva queste condizioni come predefinite sul database per tutte le prossime offerte">\ud83d\udcbe Salva predefinite</button>
+      </span>
     </div>
-    <div style="padding:6px 16px 2px;font-size:11.5px;color:#8b8a86">Le modifiche valgono solo per questa offerta e non toccano l\u0027anagrafica clienti. Spunta \u201cStampa\u201d per includere il campo nel PDF.</div>
-    <div id="off-test-list" style="overflow-y:auto;padding:10px 16px"></div>
-    <div style="display:flex;justify-content:space-between;gap:8px;padding:11px 16px;border-top:1px solid #e3e2df">
-      <div style="display:flex;gap:8px">
-        <button class="pgc-btn" onclick="offTestAdd()">+ Aggiungi campo</button>
-        <button class="pgc-btn" onclick="offTestReset()" title="Ricostruisce i campi dall\u0027anagrafica del cliente del progetto">\u21ba Da anagrafica</button>
-      </div>
-      <button class="pgc-btn pgc-btn-acc" onclick="offTestClose()">Chiudi</button>
-    </div>
+    <div style="padding:4px 14px 2px;font-size:11px;color:#8b8a86">Le condizioni vengono stampate nell\u0027ultima pagina del PDF. Le modifiche valgono per questa offerta; \u201cSalva predefinite\u201d le rende il nuovo standard.</div>
+    <div id="off-cond-list" style="padding:6px 14px 10px"></div>
   </div>
 </div>
 
@@ -1084,7 +1092,7 @@ function offerta(){
 </div>`;
 }
 
-var OFF={rows:[],cloudId:null,nome:'Nuova offerta',testata:[],areas:[]};
+var OFF={rows:[],cloudId:null,nome:'Nuova offerta',testata:[],areas:[],condizioni:[]};
 /* percorso area normalizzato: max 3 livelli separati da " / " */
 function offPathNorm(s){
   return String(s||'').split('/').map(function(x){return x.trim();}).filter(Boolean).slice(0,3).join(' / ');
@@ -1155,6 +1163,11 @@ async function initOfferta(){
   if(ne)ne.value=OFF.nome;
   offRender();
   try{if(!PGC_CLIENTI.length)await pgcFetchClienti();}catch(e){console.warn('clienti offerta:',e);}
+  await offCondLoadDef();
+  if(!(OFF.condizioni||[]).length)OFF.condizioni=offCondCopyDef();
+  if(!(OFF.testata||[]).length&&OFF.cliente)OFF.testata=offBuildTestata();
+  offTestRender();
+  offCondRender();
   await offLoadCatalog();
   /* apertura diretta dalla pagina Progetti */
   var openId=null;
@@ -1343,12 +1356,6 @@ function offDelArea(p){
 }
 
 /* ── testata ── */
-function offTestOpen(){
-  if(!(OFF.testata||[]).length)OFF.testata=offBuildTestata();
-  offTestRender();
-  document.getElementById('off-test-modal').style.display='flex';
-}
-function offTestClose(){document.getElementById('off-test-modal').style.display='none';}
 function offTestRender(){
   var box=document.getElementById('off-test-list');
   if(!box)return;
@@ -1369,6 +1376,58 @@ function offTestRender(){
 function offTestUpd(i,f,v){
   var t=(OFF.testata||[])[i];if(!t)return;
   t[f]=(f==='print')?!!v:String(v);
+}
+
+/* ── condizioni di vendita: predefinite dal database, copia per-offerta ── */
+var OFF_COND_DEF=null;
+async function offCondLoadDef(force){
+  if(OFF_COND_DEF&&!force)return OFF_COND_DEF;
+  try{
+    const r=await pgcFetch(PGC_URL+'/rest/v1/condizioni_vendita?select=etichetta,testo&order=ordine.asc',{headers:pgcHdr()});
+    if(r.ok){
+      const rows=await r.json();
+      if(rows.length)OFF_COND_DEF=rows.map(function(x){return {k:x.etichetta,v:x.testo};});
+    }
+  }catch(e){console.warn('condizioni:',e);}
+  if(!OFF_COND_DEF)OFF_COND_DEF=OFF_TPL.condizioni.map(function(c){return {k:c[0],v:c[1]};});
+  return OFF_COND_DEF;
+}
+function offCondCopyDef(){
+  return (OFF_COND_DEF||OFF_TPL.condizioni.map(function(c){return {k:c[0],v:c[1]};}))
+    .map(function(c){return {k:c.k,v:c.v};});
+}
+function offCondRender(){
+  var box=document.getElementById('off-cond-list');
+  if(!box)return;
+  box.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12.5px"><tbody>'+
+    (OFF.condizioni||[]).map(function(c,i){
+      return '<tr>'+
+        '<td style="padding:3px 4px;width:26%;vertical-align:top"><input class="pgc-inline pgc-bold" style="border-color:#e3e2df" value="'+offEsc(c.k)+'" onchange="offCondUpd('+i+',\'k\',this.value)"></td>'+
+        '<td style="padding:3px 4px"><input class="pgc-inline" style="border-color:#e3e2df" value="'+offEsc(c.v)+'" onchange="offCondUpd('+i+',\'v\',this.value)"></td>'+
+        '<td style="padding:3px 4px;text-align:right;width:36px"><button class="pgc-abtn del" style="width:24px;height:24px;font-size:11px" onclick="offCondDel('+i+')">\ud83d\uddd1</button></td>'+
+      '</tr>';
+    }).join('')+'</tbody></table>';
+}
+function offCondUpd(i,f,v){var c=(OFF.condizioni||[])[i];if(c)c[f]=String(v);}
+function offCondAdd(){OFF.condizioni=OFF.condizioni||[];OFF.condizioni.push({k:'VOCE:',v:''});offCondRender();}
+function offCondDel(i){OFF.condizioni.splice(i,1);offCondRender();}
+async function offCondReset(){
+  await offCondLoadDef(true);
+  OFF.condizioni=offCondCopyDef();
+  offCondRender();
+}
+async function offCondSaveDef(){
+  if(!(OFF.condizioni||[]).length){alert('Nessuna condizione da salvare.');return;}
+  if(!confirm('Salvare queste condizioni come predefinite per tutte le prossime offerte?'))return;
+  try{
+    const d=await pgcFetch(PGC_URL+'/rest/v1/condizioni_vendita?id=gt.0',{method:'DELETE',headers:pgcHdr()});
+    if(!d.ok)throw new Error('HTTP '+d.status);
+    const body=JSON.stringify(OFF.condizioni.map(function(c,i){return {ordine:i+1,etichetta:c.k,testo:c.v};}));
+    const r=await pgcFetch(PGC_URL+'/rest/v1/condizioni_vendita',{method:'POST',headers:pgcHdr(true),body:body});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    OFF_COND_DEF=OFF.condizioni.map(function(c){return {k:c.k,v:c.v};});
+    alert('\u2713 Condizioni predefinite aggiornate.');
+  }catch(e){alert('Salvataggio non riuscito: '+e.message);}
 }
 function offTestAdd(){
   OFF.testata=OFF.testata||[];
@@ -1403,9 +1462,9 @@ function offUpd(i,f,v){
 function offDel(i){OFF.rows.splice(i,1);offRender();}
 function offClear(){
   if(OFF.rows.length&&!confirm('Svuotare l\u0027offerta corrente?'))return;
-  OFF={rows:[],cloudId:null,nome:'Nuova offerta',testata:[],areas:[]};
+  OFF={rows:[],cloudId:null,nome:'Nuova offerta',testata:[],areas:[],condizioni:offCondCopyDef()};
   var ne=document.getElementById('off-nome'); if(ne)ne.value=OFF.nome;
-  offRender();
+  offRender();offTestRender();offCondRender();
 }
 
 /* ── import Excel (stessa filosofia di Disegno/Piano di carico) ── */
@@ -1771,7 +1830,8 @@ function offPDF(){
   doc.setTextColor.apply(doc,OFF_TPL.ink);
   doc.text('Condizioni di Vendita',ML+2,y+4.4);
   y+=9.5;
-  OFF_TPL.condizioni.forEach(function(c){
+  var _conds=(OFF.condizioni&&OFF.condizioni.length)?OFF.condizioni.map(function(c){return [c.k,c.v];}):OFF_TPL.condizioni;
+  _conds.forEach(function(c){
     doc.setFont('helvetica','bold');doc.setFontSize(8);
     doc.setTextColor.apply(doc,OFF_TPL.ink);
     doc.text(c[0],ML+1,y+3);
@@ -1802,7 +1862,7 @@ function offPDF(){
 
 /* ── cloud: salvataggio/apertura dentro il progetto unificato {cucina,carico,offerta} ── */
 function offPayload(){
-  return {v:2,nome:OFF.nome,rows:OFF.rows,testata:OFF.testata||[],areas:OFF.areas||[],aggiornato:new Date().toISOString()};
+  return {v:2,nome:OFF.nome,rows:OFF.rows,testata:OFF.testata||[],areas:OFF.areas||[],condizioni:OFF.condizioni||[],aggiornato:new Date().toISOString()};
 }
 async function offCloudSave(){
   if(!OFF.rows.length){alert('L\u0027offerta \u00e8 vuota.');return;}
@@ -1854,8 +1914,9 @@ async function offLoadProject(id,quiet){
     OFF.commerciale=p.commerciale||'';
     OFF.areas=(o&&Array.isArray(o.areas))?o.areas:[];
     OFF.testata=(o&&Array.isArray(o.testata)&&o.testata.length)?o.testata:offBuildTestata();
+    OFF.condizioni=(o&&Array.isArray(o.condizioni)&&o.condizioni.length)?o.condizioni:offCondCopyDef();
     var ne=document.getElementById('off-nome');if(ne)ne.value=OFF.nome;
-    offRender();
+    offRender();offTestRender();offCondRender();
     if(!o&&!quiet)alert('Il progetto non contiene ancora un\u0027offerta: partirai da zero, il salvataggio la aggiunger\u00e0 al progetto.');
   }catch(e){alert('Apertura non riuscita: '+e.message);}
 }
