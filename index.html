@@ -1011,6 +1011,22 @@ function offerta(){
   return `<div class="page pgc-page" style="max-width:none">
   <div class="ph" style="margin-bottom:14px"><div class="ph-title">Offerta</div></div>
 
+  <!-- BARRA OPERAZIONI -->
+  <div class="pgc-card" style="margin-bottom:14px">
+    <div class="pgc-toolbar" style="justify-content:flex-start;flex-wrap:wrap">
+      <input class="pgc-inline pgc-bold" id="off-nome" value="Nuova offerta" style="max-width:220px;border-color:#e3e2df;background:#fff" onchange="OFF.nome=this.value.trim()||'Nuova offerta'">
+      <span style="flex:1"></span>
+      <button class="pgc-btn" onclick="offCloudSave()">\ud83d\udcbe Salva</button>
+      <button class="pgc-btn" onclick="offCloudOpen()">\ud83d\udcc2 Carica</button>
+      <button class="pgc-btn" onclick="document.getElementById('off-xlsx-in').click()">\ud83d\udce5 Importa</button>
+      <button class="pgc-btn" onclick="offToDisegno()">\ud83d\udcd0 \u2192 Disegno</button>
+      <button class="pgc-btn" onclick="offToPianoCarico()">\ud83d\ude9a \u2192 Piano di carico</button>
+      <button class="pgc-btn" onclick="offPDF()">\ud83d\udcc4 PDF</button>
+      <button class="pgc-btn" onclick="offClear()" style="color:#b91c1c">\u2715 Svuota</button>
+      <input type="file" id="off-xlsx-in" accept=".xlsx,.xls" style="display:none" onchange="offImportExcel(event)">
+    </div>
+  </div>
+
   <!-- SEZIONE TESTATA -->
   <div class="pgc-card" style="margin-bottom:14px">
     <div class="pgc-toolbar" style="justify-content:space-between">
@@ -1024,18 +1040,23 @@ function offerta(){
     <div id="off-test-list" style="padding:6px 14px 10px"></div>
   </div>
 
+  <!-- SEZIONE CONDIZIONI DI VENDITA -->
+  <div class="pgc-card" style="margin-bottom:14px">
+    <div class="pgc-toolbar" style="justify-content:space-between">
+      <span style="font-weight:700;font-size:13px">\ud83d\udccb Condizioni di vendita</span>
+      <span style="display:flex;gap:8px">
+        <button class="pgc-btn" onclick="offCondAdd()">+ Condizione</button>
+        <button class="pgc-btn" onclick="offCondReset()" title="Ricarica le condizioni predefinite dal database">\u21ba Predefinite</button>
+        <button class="pgc-btn" onclick="offCondSaveDef()" title="Salva queste condizioni come predefinite sul database per tutte le prossime offerte">\ud83d\udcbe Salva predefinite</button>
+      </span>
+    </div>
+    <div style="padding:4px 14px 2px;font-size:11px;color:#8b8a86">Le condizioni vengono stampate nell\u0027ultima pagina del PDF. Le modifiche valgono per questa offerta; \u201cSalva predefinite\u201d le rende il nuovo standard.</div>
+    <div id="off-cond-list" style="padding:6px 14px 10px"></div>
+  </div>
+
   <div class="pgc-card">
-    <div class="pgc-toolbar" style="justify-content:flex-start;flex-wrap:wrap">
-      <input class="pgc-inline pgc-bold" id="off-nome" value="Nuova offerta" style="max-width:220px;border-color:#e3e2df;background:#fff" onchange="OFF.nome=this.value.trim()||'Nuova offerta'">
-      <span style="flex:1"></span>
-      <button class="pgc-btn" onclick="offCloudSave()">\ud83d\udcbe Salva</button>
-      <button class="pgc-btn" onclick="offCloudOpen()">\ud83d\udcc2 Carica</button>
-      <button class="pgc-btn" onclick="document.getElementById('off-xlsx-in').click()">\ud83d\udce5 Importa</button>
-      <button class="pgc-btn" onclick="offToDisegno()">\ud83d\udcd0 \u2192 Disegno</button>
-      <button class="pgc-btn" onclick="offToPianoCarico()">\ud83d\ude9a \u2192 Piano di carico</button>
-      <button class="pgc-btn" onclick="offPDF()">\ud83d\udcc4 PDF</button>
-      <button class="pgc-btn" onclick="offClear()" style="color:#b91c1c">\u2715 Svuota</button>
-      <input type="file" id="off-xlsx-in" accept=".xlsx,.xls" style="display:none" onchange="offImportExcel(event)">
+    <div class="pgc-toolbar" style="justify-content:flex-start">
+      <span style="font-weight:700;font-size:13px">\ud83d\uded2 Prodotti</span>
     </div>
     <div id="pgc-wrap">
       <table class="pgc-table"><thead><tr>
@@ -1065,19 +1086,6 @@ function offerta(){
     <datalist id="off-aree"></datalist>
   </div>
 
-  <!-- SEZIONE CONDIZIONI DI VENDITA -->
-  <div class="pgc-card" style="margin-top:14px">
-    <div class="pgc-toolbar" style="justify-content:space-between">
-      <span style="font-weight:700;font-size:13px">\ud83d\udccb Condizioni di vendita</span>
-      <span style="display:flex;gap:8px">
-        <button class="pgc-btn" onclick="offCondAdd()">+ Condizione</button>
-        <button class="pgc-btn" onclick="offCondReset()" title="Ricarica le condizioni predefinite dal database">\u21ba Predefinite</button>
-        <button class="pgc-btn" onclick="offCondSaveDef()" title="Salva queste condizioni come predefinite sul database per tutte le prossime offerte">\ud83d\udcbe Salva predefinite</button>
-      </span>
-    </div>
-    <div style="padding:4px 14px 2px;font-size:11px;color:#8b8a86">Le condizioni vengono stampate nell\u0027ultima pagina del PDF. Le modifiche valgono per questa offerta; \u201cSalva predefinite\u201d le rende il nuovo standard.</div>
-    <div id="off-cond-list" style="padding:6px 14px 10px"></div>
-  </div>
 </div>
 
 <!-- MODAL: scelta progetto cloud per l'offerta -->
