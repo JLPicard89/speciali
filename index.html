@@ -1034,10 +1034,13 @@ function offerta(){
       <span style="display:flex;gap:8px">
         <button class="pgc-btn" onclick="offTestAdd()">+ Campo</button>
         <button class="pgc-btn" onclick="offTestReset()" title="Ricostruisce i campi dall\u0027anagrafica del cliente del progetto">\u21ba Da anagrafica</button>
+        <button class="pgc-abtn" id="off-test-tgl" title="Comprimi/espandi" onclick="offSecToggle('test')" style="width:30px">\u2013</button>
       </span>
     </div>
-    <div style="padding:4px 14px 2px;font-size:11px;color:#8b8a86">Le modifiche valgono solo per questa offerta e non toccano l\u0027anagrafica. \u201cStampa\u201d include il campo nel PDF.</div>
-    <div id="off-test-list" style="padding:6px 14px 10px"></div>
+    <div id="off-test-body">
+      <div style="padding:4px 14px 2px;font-size:11px;color:#8b8a86">Le modifiche valgono solo per questa offerta e non toccano l\u0027anagrafica. \u201cStampa\u201d include il campo nel PDF.</div>
+      <div id="off-test-list" style="padding:6px 14px 10px"></div>
+    </div>
   </div>
 
   <!-- SEZIONE CONDIZIONI DI VENDITA -->
@@ -1048,10 +1051,13 @@ function offerta(){
         <button class="pgc-btn" onclick="offCondAdd()">+ Condizione</button>
         <button class="pgc-btn" onclick="offCondReset()" title="Ricarica le condizioni predefinite dal database">\u21ba Predefinite</button>
         <button class="pgc-btn" onclick="offCondSaveDef()" title="Salva queste condizioni come predefinite sul database per tutte le prossime offerte">\ud83d\udcbe Salva predefinite</button>
+        <button class="pgc-abtn" id="off-cond-tgl" title="Comprimi/espandi" onclick="offSecToggle('cond')" style="width:30px">\u2013</button>
       </span>
     </div>
-    <div style="padding:4px 14px 2px;font-size:11px;color:#8b8a86">Le condizioni vengono stampate nell\u0027ultima pagina del PDF. Le modifiche valgono per questa offerta; \u201cSalva predefinite\u201d le rende il nuovo standard.</div>
-    <div id="off-cond-list" style="padding:6px 14px 10px"></div>
+    <div id="off-cond-body">
+      <div style="padding:4px 14px 2px;font-size:11px;color:#8b8a86">Le condizioni vengono stampate nell\u0027ultima pagina del PDF. Le modifiche valgono per questa offerta; \u201cSalva predefinite\u201d le rende il nuovo standard.</div>
+      <div id="off-cond-list" style="padding:6px 14px 10px"></div>
+    </div>
   </div>
 
   <div class="pgc-card">
@@ -1176,6 +1182,7 @@ async function initOfferta(){
   if(!(OFF.testata||[]).length&&OFF.cliente)OFF.testata=offBuildTestata();
   offTestRender();
   offCondRender();
+  offSecApply();
   await offLoadCatalog();
   /* apertura diretta dalla pagina Progetti */
   var openId=null;
@@ -1380,6 +1387,23 @@ function offTestRender(){
         '<td style="padding:3px 4px;text-align:right"><button class="pgc-abtn del" style="width:24px;height:24px;font-size:11px" onclick="offTestDel('+i+')">\ud83d\uddd1</button></td>'+
       '</tr>';
     }).join('')+'</tbody></table>';
+}
+var OFF_SEC_OPEN={test:true,cond:true}; /* stato comprimi/espandi per la sessione */
+function offSecToggle(which){
+  var b=document.getElementById('off-'+which+'-body');
+  var t=document.getElementById('off-'+which+'-tgl');
+  if(!b||!t)return;
+  OFF_SEC_OPEN[which]=!OFF_SEC_OPEN[which];
+  b.style.display=OFF_SEC_OPEN[which]?'':'none';
+  t.textContent=OFF_SEC_OPEN[which]?'\u2013':'+';
+}
+function offSecApply(){
+  ['test','cond'].forEach(function(w){
+    var b=document.getElementById('off-'+w+'-body');
+    var t=document.getElementById('off-'+w+'-tgl');
+    if(b)b.style.display=OFF_SEC_OPEN[w]?'':'none';
+    if(t)t.textContent=OFF_SEC_OPEN[w]?'\u2013':'+';
+  });
 }
 function offTestUpd(i,f,v){
   var t=(OFF.testata||[])[i];if(!t)return;
