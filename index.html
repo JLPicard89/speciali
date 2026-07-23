@@ -551,16 +551,35 @@ function livelli3d(){
   </div>
 
 <div id="l3d-arch-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,25,.4);z-index:300;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:10px;width:min(680px,94vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.25)">
+  <div style="background:#fff;border-radius:10px;width:min(1060px,96vw);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.25)">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #e3e2df">
       <span style="font-weight:700;font-size:14px">Definizione archetipo</span>
       <button onclick="l3dArchClose()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#8b8a86">\u2715</button>
     </div>
-    <div style="padding:10px 16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto">
+    <div style="display:flex;gap:0;overflow:hidden;flex:1;min-height:0">
+    <div style="padding:10px 16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-width:0">
       <input class="form-input" id="l3d-arch-nome" placeholder="Nome (es. vetrina, cottura, pensile\u2026)">
       <input class="form-input" id="l3d-arch-note" placeholder="Note (facoltative)">
       <div style="font-size:11px;color:#8b8a86">JSON: {"parti":[{"forma":"box|cyl","mat":"inox|inox2|scuro|nero","w","h","d" (o "r" per cyl),"x","y","z","rx" gradi}]} \u2014 espressioni con L, P, H in metri, min() e max(). Origine al centro della pianta, y=0 a terra.</div>
-      <textarea class="form-input" id="l3d-arch-json" style="min-height:260px;font-family:monospace;font-size:12px"></textarea>
+      <textarea class="form-input" id="l3d-arch-json" style="min-height:300px;font-family:monospace;font-size:12px" oninput="l3dPrevSchedule()"></textarea>
+    </div>
+    <div style="width:400px;flex-shrink:0;border-left:1px solid #e3e2df;background:#f7f6f3;display:flex;flex-direction:column;padding:10px 12px">
+      <div style="display:flex;gap:6px;align-items:flex-end;margin-bottom:8px">
+        <div style="flex:1"><label style="display:block;font-size:10px;color:#8b8a86;text-transform:uppercase;margin-bottom:2px">L (mm)</label><input class="form-input" type="number" id="l3d-pv-l" value="1200" step="50" onchange="l3dPrevBuild()"></div>
+        <div style="flex:1"><label style="display:block;font-size:10px;color:#8b8a86;text-transform:uppercase;margin-bottom:2px">P (mm)</label><input class="form-input" type="number" id="l3d-pv-p" value="600" step="50" onchange="l3dPrevBuild()"></div>
+        <div style="flex:1"><label style="display:block;font-size:10px;color:#8b8a86;text-transform:uppercase;margin-bottom:2px">H (mm)</label><input class="form-input" type="number" id="l3d-pv-h" value="850" step="50" onchange="l3dPrevBuild()"></div>
+      </div>
+      <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="pgc-btn" style="font-size:11px;padding:4px 8px" onclick="l3dPrevSize(1200,600,850)">1200\u00d7600</button>
+        <button class="pgc-btn" style="font-size:11px;padding:4px 8px" onclick="l3dPrevSize(2400,700,850)">2400\u00d7700</button>
+        <button class="pgc-btn" style="font-size:11px;padding:4px 8px" onclick="l3dPrevSize(700,600,2000)">700\u00d7600\u00d72000</button>
+      </div>
+      <div style="position:relative;flex:1;min-height:260px;border:1px solid #e3e2df;border-radius:8px;overflow:hidden;background:#fff">
+        <canvas id="l3d-pv-canvas" style="width:100%;height:100%;display:block;touch-action:none"></canvas>
+      </div>
+      <div id="l3d-pv-status" style="font-size:11px;color:#8b8a86;margin-top:6px;min-height:15px"></div>
+      <div style="font-size:10.5px;color:#b3b2ae">Trascina per ruotare \u00b7 rotella per lo zoom \u00b7 il riquadro tratteggiato \u00e8 l\u0027ingombro L\u00d7P\u00d7H</div>
+    </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;padding:11px 16px;border-top:1px solid #e3e2df">
       <button class="pgc-btn" onclick="l3dArchClose()">Annulla</button>
@@ -646,6 +665,139 @@ function l3dArchRender(){
   box.innerHTML=html+'</tbody></table>';
 }
 var L3D_ARCH_EDIT=null;
+
+/* ── anteprima 3D: usa le stesse funzioni geometriche del Disegno, estratte dal suo sorgente ── */
+var L3D_PV={ready:false,loading:false,raf:0,rot:{x:0.5,y:0.7},dist:3,err:null};
+function l3dPrevLoadThree(cb){
+  if(window.THREE){cb();return;}
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';
+  s.onload=function(){cb();};
+  s.onerror=function(){L3D_PV.err='Three.js non caricato';l3dPrevStatus();};
+  document.head.appendChild(s);
+}
+function l3dPrevLoadBuilder(){
+  if(window.buildArchFromDef)return true;
+  try{
+    /* il blob del Disegno vive dentro initCK(): ne leggo il sorgente per non duplicare la geometria */
+    var m=String(initCK).match(/var b64ck="([A-Za-z0-9+\/=]+)"/);
+    if(!m)throw new Error('sorgente Disegno non trovato');
+    var ck=atob(m[1]);
+    function chunk(a,b){
+      var i=ck.indexOf(a),j=ck.indexOf(b,i);
+      if(i<0||j<0)throw new Error('blocco non trovato: '+a);
+      return ck.slice(i,j);
+    }
+    var code=chunk('var ARCH_MAT={','function buildArchetype(')+
+             chunk('function archExpr(','function loadCfg3d(');
+    (0,eval)(code);
+    return !!window.buildArchFromDef;
+  }catch(e){L3D_PV.err='Motore archetipi: '+e.message;return false;}
+}
+function l3dPrevStatus(msg){
+  var el=document.getElementById('l3d-pv-status');
+  if(!el)return;
+  if(L3D_PV.err){el.style.color='#b91c1c';el.textContent=L3D_PV.err;return;}
+  el.style.color='#8b8a86';el.textContent=msg||'';
+}
+function l3dPrevSize(l,p,h){
+  document.getElementById('l3d-pv-l').value=l;
+  document.getElementById('l3d-pv-p').value=p;
+  document.getElementById('l3d-pv-h').value=h;
+  l3dPrevBuild();
+}
+var _l3dPvDeb=null;
+function l3dPrevSchedule(){clearTimeout(_l3dPvDeb);_l3dPvDeb=setTimeout(l3dPrevBuild,400);}
+function l3dPrevStart(){
+  L3D_PV.err=null;
+  l3dPrevLoadThree(function(){
+    if(!l3dPrevLoadBuilder()){l3dPrevStatus();return;}
+    l3dPrevInit();
+    l3dPrevBuild();
+  });
+}
+function l3dPrevInit(){
+  if(L3D_PV.ready)return;
+  var cv=document.getElementById('l3d-pv-canvas');
+  if(!cv)return;
+  var S=L3D_PV;
+  S.scene=new THREE.Scene();
+  S.scene.background=new THREE.Color(0xffffff);
+  S.camera=new THREE.PerspectiveCamera(45,1,0.01,100);
+  S.renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+  S.renderer.setPixelRatio(window.devicePixelRatio||1);
+  S.scene.add(new THREE.AmbientLight(0xffffff,0.72));
+  var k=new THREE.DirectionalLight(0xffffff,0.62);k.position.set(4,7,5);S.scene.add(k);
+  var f=new THREE.DirectionalLight(0xffffff,0.26);f.position.set(-5,4,-4);S.scene.add(f);
+  S.root=new THREE.Group();S.scene.add(S.root);
+  /* orbita e zoom con il mouse */
+  var down=false,px=0,py=0;
+  cv.addEventListener('pointerdown',function(e){down=true;px=e.clientX;py=e.clientY;try{cv.setPointerCapture(e.pointerId);}catch(_){}});
+  cv.addEventListener('pointermove',function(e){
+    if(!down)return;
+    S.rot.y+=(e.clientX-px)*0.01;
+    S.rot.x=Math.max(-1.4,Math.min(1.4,S.rot.x+(e.clientY-py)*0.01));
+    px=e.clientX;py=e.clientY;l3dPrevCam();
+  });
+  cv.addEventListener('pointerup',function(){down=false;});
+  cv.addEventListener('pointercancel',function(){down=false;});
+  cv.addEventListener('wheel',function(e){
+    e.preventDefault();
+    S.dist=Math.max(0.4,Math.min(20,S.dist*(e.deltaY>0?1.12:0.89)));
+    l3dPrevCam();
+  },{passive:false});
+  S.ready=true;
+  (function loop(){
+    S.raf=requestAnimationFrame(loop);
+    var w=cv.clientWidth,h=cv.clientHeight;
+    if(w&&h&&(cv.width!==Math.round(w*(window.devicePixelRatio||1))||S._h!==h)){
+      S.renderer.setSize(w,h,false);
+      S.camera.aspect=w/h;S.camera.updateProjectionMatrix();S._h=h;
+    }
+    S.renderer.render(S.scene,S.camera);
+  })();
+}
+function l3dPrevCam(){
+  var S=L3D_PV;
+  if(!S.camera)return;
+  var t=S.target||new THREE.Vector3(0,0.45,0);
+  S.camera.position.set(
+    t.x+S.dist*Math.cos(S.rot.x)*Math.sin(S.rot.y),
+    t.y+S.dist*Math.sin(S.rot.x),
+    t.z+S.dist*Math.cos(S.rot.x)*Math.cos(S.rot.y));
+  S.camera.lookAt(t);
+}
+function l3dPrevBuild(){
+  var S=L3D_PV;
+  if(!S.ready||!window.buildArchFromDef)return;
+  while(S.root.children.length)S.root.remove(S.root.children[0]);
+  S.err=null;
+  var L=(parseFloat(document.getElementById('l3d-pv-l').value)||1200)/1000;
+  var P=(parseFloat(document.getElementById('l3d-pv-p').value)||600)/1000;
+  var H=(parseFloat(document.getElementById('l3d-pv-h').value)||850)/1000;
+  /* pavimento e ingombro di riferimento */
+  var grid=new THREE.GridHelper(Math.max(L,P)*3,12,0xd8d7d3,0xe8e7e3);
+  S.root.add(grid);
+  var box=new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(L,H,P)),
+    new THREE.LineBasicMaterial({color:0xc9c8c4}));
+  box.position.y=H/2;
+  S.root.add(box);
+  var n=0;
+  try{
+    var def=JSON.parse(document.getElementById('l3d-arch-json').value);
+    if(!def||!Array.isArray(def.parti))throw new Error('manca l\u0027array "parti"');
+    var obj=buildArchFromDef(def.parti,L,H,P);
+    S.root.add(obj);
+    obj.traverse(function(o){if(o.isMesh)n++;});
+  }catch(e){
+    S.err='JSON: '+e.message;
+  }
+  S.target=new THREE.Vector3(0,H/2,0);
+  S.dist=Math.max(L,P,H)*2.2+0.5;
+  l3dPrevCam();
+  l3dPrevStatus(n?(n+' parti generate su '+Math.round(L*1000)+'\u00d7'+Math.round(P*1000)+'\u00d7'+Math.round(H*1000)+' mm'):'Nessuna parte visibile con queste dimensioni');
+}
 function l3dArchNew(nome){
   L3D_ARCH_EDIT=null;
   document.getElementById('l3d-arch-nome').value=nome||'';
@@ -655,6 +807,7 @@ function l3dArchNew(nome){
     {forma:'box',mat:'inox',w:'L',h:'0.04',d:'P',x:'0',y:'H-0.02',z:'0'}
   ]},null,1);
   document.getElementById('l3d-arch-modal').style.display='flex';
+  setTimeout(l3dPrevStart,30);
 }
 function l3dArchEdit(i){
   var a=L3D_ARCH[i];if(!a)return;
@@ -663,8 +816,12 @@ function l3dArchEdit(i){
   document.getElementById('l3d-arch-note').value=a.note||'';
   document.getElementById('l3d-arch-json').value=JSON.stringify(a.parti,null,1);
   document.getElementById('l3d-arch-modal').style.display='flex';
+  setTimeout(l3dPrevStart,30);
 }
-function l3dArchClose(){document.getElementById('l3d-arch-modal').style.display='none';}
+function l3dArchClose(){
+  document.getElementById('l3d-arch-modal').style.display='none';
+  if(L3D_PV.raf){cancelAnimationFrame(L3D_PV.raf);L3D_PV.raf=0;L3D_PV.ready=false;}
+}
 async function l3dArchSave(){
   var nome=document.getElementById('l3d-arch-nome').value.trim().toLowerCase();
   var note=document.getElementById('l3d-arch-note').value.trim();
