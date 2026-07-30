@@ -816,15 +816,24 @@ function l3dPrevGlb(){
       var L=document.getElementById('l3d-pv-l').value,
           P=document.getElementById('l3d-pv-p').value,
           H=document.getElementById('l3d-pv-h').value;
-      exp.parse(clone,function(glb){
-        var blob=new Blob([glb],{type:'model/gltf-binary'});
+      /* in three.js r128 la firma e' parse(oggetto, callback, opzioni):
+         con le opzioni al posto sbagliato l'esportatore restituisce JSON invece del binario */
+      exp.parse(clone,function(res){
+        var blob,ext;
+        if(res instanceof ArrayBuffer){
+          blob=new Blob([res],{type:'model/gltf-binary'});ext='.glb';
+        }else{
+          /* ripiego: modello in formato testo, comunque apribile */
+          blob=new Blob([JSON.stringify(res)],{type:'model/gltf+json'});ext='.gltf';
+        }
+        if(!blob.size){alert('Esportazione non riuscita: modello vuoto.');return;}
         var url=URL.createObjectURL(blob);
         var a=document.createElement('a');
-        a.href=url;a.download=nome+'_'+L+'x'+P+'x'+H+'.glb';
+        a.href=url;a.download=nome+'_'+L+'x'+P+'x'+H+ext;
         document.body.appendChild(a);a.click();document.body.removeChild(a);
         setTimeout(function(){URL.revokeObjectURL(url);},3000);
-        l3dPrevStatus('Modello scaricato: '+a.download);
-      },function(){alert('Esportazione non riuscita.');},{binary:true,onlyVisible:true});
+        l3dPrevStatus('Modello scaricato: '+a.download+' ('+Math.round(blob.size/1024)+' kB)');
+      },{binary:true,onlyVisible:true});
     }catch(e){alert('Esportazione: '+e.message);}
   }
   if(window.THREE&&THREE.GLTFExporter){esporta();return;}
