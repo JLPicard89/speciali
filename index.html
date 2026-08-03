@@ -533,6 +533,20 @@ function closeSidebar(){
 /* ── Uscendo da un ambiente con modifiche non salvate si chiede cosa fare ──
    Le applicazioni espongono tnkModificato() e tnkSalva(); il portale le interroga
    prima di cambiare pagina o di chiudere la scheda. */
+/* Registro degli ambienti della pagina corrente che possono avere lavoro non salvato.
+   Ogni schermata si dichiara con tnkRegistra: il portale non ha bisogno di conoscerla. */
+var TNK_AMBIENTI=[];
+function tnkRegistra(nome,modificato,salva){
+  TNK_AMBIENTI=TNK_AMBIENTI.filter(function(a){return a.nome!==nome;});
+  TNK_AMBIENTI.push({nome:nome,modificato:modificato,salva:salva});
+}
+function _ambienteInline(){
+  for(var i=0;i<TNK_AMBIENTI.length;i++){
+    var a=TNK_AMBIENTI[i];
+    try{ if(a.modificato())return {tnkNomeAmbiente:a.nome,tnkSalva:a.salva}; }catch(e){}
+  }
+  return null;
+}
 function _appAttiva(){
   var ids=['ck-iframe','pc-iframe'];
   for(var i=0;i<ids.length;i++){
@@ -547,8 +561,10 @@ function _appAttiva(){
 }
 function _modificheInSospeso(){
   var w=_appAttiva();
-  if(!w)return null;
-  try{ return w.tnkModificato()?w:null; }catch(e){ return null; }
+  if(w){
+    try{ if(w.tnkModificato())return w; }catch(e){}
+  }
+  return _ambienteInline();   /* schermate del portale (offerta, ...) */
 }
 function chiediSalvataggio(procedi){
   var w=_modificheInSospeso();
@@ -588,6 +604,7 @@ function go(p){
   _go(p);
 }
 function _go(p){
+  TNK_AMBIENTI=[];   /* la schermata che si apre dichiarera' il proprio stato */
   /* chiudendo una pagina 3d se ne libera il contesto grafico */
   if(typeof l3dPrevDispose==='function')l3dPrevDispose();
   document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
@@ -968,6 +985,27 @@ function l3dArchEdit(i){
   document.getElementById('l3d-arch-json').value=JSON.stringify(a.parti,null,1);
   document.getElementById('l3d-arch-modal').style.display='flex';
   setTimeout(l3dPrevStart,30);
+  l3dArchRegistra();
+}
+/* dichiara al portale le modifiche in corso sulla definizione dell'archetipo */
+var _l3dUltimo='';
+function l3dArchFirma(){
+  var n=document.getElementById('l3d-arch-nome'),j=document.getElementById('l3d-arch-json');
+  return ((n&&n.value)||'')+'\u241f'+((j&&j.value)||'');
+}
+function l3dArchRegistra(){
+  _l3dUltimo=l3dArchFirma();
+  if(typeof tnkRegistra!=='function')return;
+  tnkRegistra('Definizione archetipo',
+    function(){
+      var m=document.getElementById('l3d-arch-modal');
+      if(!m||m.style.display==='none')return false;   /* finestra chiusa: nulla in sospeso */
+      return l3dArchFirma()!==_l3dUltimo;
+    },
+    function(cb){
+      try{ Promise.resolve(l3dArchSave()).then(function(){_l3dUltimo=l3dArchFirma();cb(true);},function(){cb(false);}); }
+      catch(e){ cb(false); }
+    });
 }
 function l3dArchClose(){
   document.getElementById('l3d-arch-modal').style.display='none';
@@ -1860,6 +1898,9 @@ function offCatStatus(){
   else if(OFF_CAT_STATE==='error')box.innerHTML='<div style="color:#b91c1c;font-size:12px;padding:8px">\u2717 Listino non raggiungibile. <a href="#" onclick="OFF_CAT_STATE=\'idle\';offLoadCatalog();return false" style="color:#0d7a5f">Riprova</a></div>';
   else if(OFF_CAT_STATE==='ready')box.innerHTML='<div style="color:#8b8a86;font-size:12px;padding:8px">\u2713 Listino pronto: '+OFF_CAT.length+' prodotti. Digita per cercare.</div>';
 }
+var _offUltimo='';
+function offFirma(){try{return JSON.stringify(OFF);}catch(e){return '';}}
+function offSegnaSalvato(){_offUltimo=offFirma();}
 async function initOfferta(){
   var ne=document.getElementById('off-nome');
   if(ne)ne.value=OFF.nome;
@@ -1871,6 +1912,13 @@ async function initOfferta(){
   offTestRender();
   offCondRender();
   offSecApply();
+  offSegnaSalvato();
+  tnkRegistra('Offerta',
+    function(){return OFF.rows.length>0&&offFirma()!==_offUltimo;},
+    function(cb){
+      try{ Promise.resolve(offCloudSave()).then(function(){offSegnaSalvato();cb(true);},function(){cb(false);}); }
+      catch(e){ cb(false); }
+    });
   await offLoadCatalog();
   /* apertura diretta dalla pagina Progetti */
   var openId=null;
