@@ -324,8 +324,8 @@ tbody tr:hover td{background:var(--c-bg)}
 .pgc-table{width:100%;border-collapse:collapse;font-size:13.5px;color:var(--p-text)}
 .pgc-table th{position:sticky;top:0;background:var(--p-surf2);text-align:left;
   font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--p-muted);
-  padding:9px 14px;border-bottom:1px solid var(--p-border);white-space:nowrap}
-.pgc-table td{padding:10px 14px;border-bottom:1px solid var(--p-surf2);vertical-align:middle}
+  padding:7px 14px;border-bottom:1px solid var(--p-border);white-space:nowrap}
+.pgc-table td{padding:5px 14px;border-bottom:1px solid var(--p-surf2);vertical-align:middle}
 .pgc-table tbody tr{transition:background .12s}
 .pgc-table tbody tr:hover{background:var(--p-surf2)}
 .pgc-table tbody tr:last-child td{border-bottom:none}
@@ -339,7 +339,7 @@ tbody tr:hover td{background:var(--c-bg)}
 .pgc-badges{font-size:17px;line-height:1;flex-shrink:0;white-space:nowrap}
 .pgc-badges:empty{display:none}
 .pgc-inline{width:100%;min-width:70px;background:transparent;border:1px solid transparent;border-radius:7px;
-  padding:5px 7px;font-size:13.5px;font-family:inherit;color:var(--p-text);outline:none;transition:.12s}
+  padding:3px 7px;font-size:13px;font-family:inherit;color:var(--p-text);outline:none;transition:.12s}
 .pgc-inline.pgc-bold{font-weight:600}
 .pgc-inline::placeholder{color:var(--p-muted)}
 .pgc-inline:hover{border-color:var(--p-border);background:var(--p-surf)}
@@ -362,6 +362,11 @@ select.pgc-sel{appearance:none;-webkit-appearance:none;cursor:pointer;
 .l3d-colL{display:flex;flex-direction:column;gap:14px;min-width:0}
 .l3d-colR{min-width:0;display:flex;flex-direction:column;max-height:calc(100vh - 150px)}
 .l3d-arch-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:120px}
+/* toolbar archetipi piu' bassa, con il select che non viene tagliato */
+.l3d-arch-toolbar{padding:7px 14px}
+.l3d-arch-fsel{max-width:150px;height:28px;padding:0 26px 0 9px;font-size:12px;line-height:26px;border-radius:7px}
+/* righe archetipi compatte */
+.l3d-arch-scroll table td{padding:3px 4px!important;line-height:1.25}
 .l3d-mbox{background:#fff;border-radius:10px;width:min(1060px,96vw);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.25)}
 .l3d-mbody{display:flex;gap:0;overflow:hidden;flex:1;min-height:0}
 .l3d-mleft{padding:10px 16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-width:0}
@@ -645,10 +650,10 @@ function livelli3d(){
       </div>
     </div>
     <div class="pgc-card l3d-colR">
-      <div class="pgc-toolbar" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div class="pgc-toolbar l3d-arch-toolbar" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
         <span style="font-weight:700;font-size:13px">\ud83e\uddf1 Archetipi</span>
         <span style="display:flex;gap:8px;align-items:center">
-          <select class="form-input" id="l3d-arch-fbrand" style="max-width:150px;height:30px;font-size:12px" onchange="l3dArchRender()"><option value="">Tutti i brand</option></select>
+          <select class="form-input l3d-arch-fsel" id="l3d-arch-fbrand" onchange="l3dArchRender()"><option value="">Tutti i brand</option></select>
           <button class="pgc-btn" onclick="l3dArchNew()">+ Nuovo</button>
         </span>
       </div>
