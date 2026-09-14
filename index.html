@@ -841,6 +841,10 @@ function l3dTexPick(i,campo){
 async function l3dTexUp(i,campo,file){
   var m=L3D_TEX[i]; if(!m)return;
   var box=document.getElementById('l3d-tex');
+  /* un file molto pesante si carica, ma poi va scaricato a ogni walkthrough:
+     meglio avvisare prima che scoprirlo dopo */
+  if(file.size>20*1024*1024&&!confirm('Il file pesa '+(file.size/1048576).toFixed(1)+
+     ' MB e andra\u0027 scaricato a ogni apertura del walkthrough.\nProcedo lo stesso?'))return;
   if(box)box.style.opacity='0.55';
   try{
     /* il nome comprende il momento del caricamento: sostituendo una mappa il
@@ -852,7 +856,17 @@ async function l3dTexUp(i,campo,file){
       method:'POST',
       headers:Object.assign({'Content-Type':file.type||'application/octet-stream','x-upsert':'true'},l3dHdr()),
       body:file});
-    if(!r.ok){ alert('Caricamento non riuscito ('+r.status+').'); return; }
+    if(!r.ok){
+      /* il codice di stato da solo non dice nulla a chi sta caricando:
+         si traduce nei casi che capitano davvero */
+      var causa='';
+      try{ var t=await r.text(); if(t&&t.length<300)causa='\n'+t; }catch(e){}
+      if(r.status===413)causa='\nIl file supera il limite consentito. Scarica la versione 1K invece della 2K, oppure converti in JPG le mappe di colore e rugosita\u0027 (il rilievo lasciarlo in PNG).';
+      else if(r.status===403||r.status===401)causa='\nPermessi insufficienti sullo spazio di archiviazione.';
+      else if(r.status===415)causa='\nFormato non accettato: usa PNG, JPG o WEBP.';
+      alert('Caricamento non riuscito ('+r.status+').'+causa);
+      return;
+    }
     var patch={};
     patch[campo]=PGC_URL+'/storage/v1/object/public/materiali/'+percorso;
     if(!(await l3dTexSalva(i,patch)))alert('File caricato ma non salvato sul materiale.');
