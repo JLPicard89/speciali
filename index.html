@@ -774,7 +774,9 @@ var L3D_TEX_MAPPE=[
 ];
 async function l3dTexLoad(){
   try{
-    const r=await pgcFetch(PGC_URL+'/rest/v1/materiali_3d?select=id,nome,tex_base,tex_normale,tex_rugosita,tex_metallicita,tex_lato_m&order=nome',{headers:l3dHdr()});
+    /* la tabella non ha una colonna id: la chiave e' il nome. Chiedendo 'id'
+       PostgREST rispondeva con un errore e l'elenco restava vuoto. */
+    const r=await pgcFetch(PGC_URL+'/rest/v1/materiali_3d?select=nome,etichetta,tex_base,tex_normale,tex_rugosita,tex_metallicita,tex_lato_m&order=ordine,nome',{headers:l3dHdr()});
     L3D_TEX=r.ok?await r.json():[];
   }catch(e){L3D_TEX=[];}
   l3dTexRender();
@@ -782,12 +784,12 @@ async function l3dTexLoad(){
 function l3dTexRender(){
   var box=document.getElementById('l3d-tex');
   if(!box)return;
-  if(!L3D_TEX.length){box.innerHTML='<div style="color:#8b8a86;font-size:12px">Nessun materiale in tabella.</div>';return;}
+  if(!L3D_TEX.length){box.innerHTML='<div style="color:#8b8a86;font-size:12px">Elenco materiali non disponibile. Premi \u21bb Aggiorna.</div>';return;}
   var h='<table style="width:100%;border-collapse:collapse;font-size:12px"><tbody>';
   L3D_TEX.forEach(function(m,i){
     var n=0;
     L3D_TEX_MAPPE.forEach(function(mp){if(m[mp.campo])n++;});
-    h+='<tr><td style="padding:3px 4px;font-weight:600;white-space:nowrap">'+offEsc(m.nome)+'</td>'+
+    h+='<tr><td style="padding:3px 4px;font-weight:600;white-space:nowrap" title="'+offEsc(m.nome)+'">'+offEsc(m.etichetta||m.nome)+'</td>'+
        '<td style="padding:3px 4px;color:'+(n?'#0d7a5f':'#b3b2ae')+';font-size:11px;white-space:nowrap">'+
        (n?n+'/4':'proc.')+'</td>'+
        '<td style="padding:3px 4px;white-space:nowrap">'+
@@ -809,7 +811,7 @@ function l3dTexRender(){
 async function l3dTexSalva(i,patch){
   var m=L3D_TEX[i]; if(!m)return false;
   try{
-    const r=await pgcFetch(PGC_URL+'/rest/v1/materiali_3d?id=eq.'+encodeURIComponent(m.id),{
+    const r=await pgcFetch(PGC_URL+'/rest/v1/materiali_3d?nome=eq.'+encodeURIComponent(m.nome),{
       method:'PATCH',
       headers:Object.assign({'Content-Type':'application/json','Prefer':'return=minimal'},l3dHdr()),
       body:JSON.stringify(patch)});
