@@ -425,6 +425,15 @@ select.pgc-sel{appearance:none;-webkit-appearance:none;cursor:pointer;
       </div>
     </div>
     <div style="padding:1.75rem 2rem 2rem">
+      <label style="display:block;font-size:12px;font-weight:500;color:#6B6A67;margin-bottom:6px">Email</label>
+      <input id="auth-mail" type="email" placeholder="nome@azienda.it"
+        autocomplete="username"
+        style="width:100%;padding:10px 13px;border:1px solid #CFCECA;border-radius:8px;
+               font-size:14px;color:#1C1B19;background:#fff;font-family:inherit;
+               outline:none;box-sizing:border-box;margin-bottom:12px;transition:border .15s"
+        onfocus="this.style.borderColor='#1C1B19'"
+        onblur="this.style.borderColor='#CFCECA'"
+        onkeydown="if(event.key==='Enter')authCheck()">
       <label style="display:block;font-size:12px;font-weight:500;color:#6B6A67;margin-bottom:6px">Password</label>
       <input id="auth-pwd" type="password" placeholder="Inserisci la password"
         autocomplete="current-password"
@@ -455,38 +464,51 @@ select.pgc-sel{appearance:none;-webkit-appearance:none;cursor:pointer;
 </div>
 
 <script>
-(function(){
-  var HASH='1817a57c297329040ccfd9b31b1fdfce3d4441ae4437ec3f02003cff0b523314';
-  var KEY='_sc_auth';
-  // Check existing session
-  if(sessionStorage.getItem(KEY)===HASH){
-    document.getElementById('auth-gate').style.display='none';
-    return;
-  }
-  // Focus input
-  setTimeout(function(){ var i=document.getElementById('auth-pwd'); if(i)i.focus(); },100);
-})();
+/* La schermata resta visibile finche' non c'e' una sessione valida, e il
+   controllo e' sul token invece che su una parola d'ordine nel codice.
+   Va aspettato il termine del caricamento: le funzioni di accesso sono definite
+   nello script principale, che a questo punto non e' ancora stato letto. */
+document.addEventListener('DOMContentLoaded',async function(){
+  try{
+    if(typeof authCarica!=='function')throw 0;
+    authCarica();
+    if(AUTH_SESS&&_authScaduta())await authRinnova();
+    if(authToken()){
+      var g=document.getElementById('auth-gate');
+      if(g)g.style.display='none';
+      return;
+    }
+  }catch(e){}
+  var i=document.getElementById('auth-mail'); if(i)i.focus();
+});
 
 async function authCheck(){
-  var pwd=document.getElementById('auth-pwd').value;
+  /* Prima l'ingresso confrontava un hash scritto nel codice: chiunque poteva
+     leggerlo e aggirarlo dagli strumenti del browser, e soprattutto non dava
+     alcuna identita' al database. Ora e' un accesso vero con account, e il
+     token che ne risulta accompagna ogni chiamata: e' quello che permette di
+     riservare le scritture a chi ne ha diritto. */
+  var mail=(document.getElementById('auth-mail')||{}).value||'';
+  var pwd=(document.getElementById('auth-pwd')||{}).value||'';
   var btn=document.getElementById('auth-btn');
   var err=document.getElementById('auth-err');
-  if(!pwd){document.getElementById('auth-pwd').focus();return;}
-  btn.disabled=true; btn.textContent='Accesso…'; err.style.display='none';
+  function errore(t){ if(err){err.textContent=t;err.style.display='block';} }
+  if(!mail.trim()){ errore('Inserisci l\'email.'); var em=document.getElementById('auth-mail'); if(em)em.focus(); return; }
+  if(!pwd){ errore('Inserisci la password.'); document.getElementById('auth-pwd').focus(); return; }
+  btn.disabled=true; btn.textContent='Accesso\u2026'; if(err)err.style.display='none';
   try{
-    var enc=new TextEncoder().encode(pwd);
-    var buf=await crypto.subtle.digest('SHA-256',enc);
-    var hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    var HASH='1817a57c297329040ccfd9b31b1fdfce3d4441ae4437ec3f02003cff0b523314';
-    if(hash===HASH){
-      sessionStorage.setItem('_sc_auth',HASH);
-      document.getElementById('auth-gate').style.display='none';
-    }else{
-      err.style.display='block';
-      document.getElementById('auth-pwd').value='';
-      document.getElementById('auth-pwd').focus();
-    }
-  }catch(e){err.textContent='Errore browser. Riprova.';err.style.display='block';}
+    await authEntra(mail.trim(),pwd);
+    var g=document.getElementById('auth-gate');
+    if(g)g.style.display='none';
+    location.reload();          /* si riparte con il token gia' attivo */
+  }catch(e){
+    var m=String(e.message||'');
+    if(/Invalid login/i.test(m))m='Email o password non corretti.';
+    else if(/not confirmed/i.test(m))m='Account non confermato: spunta \u201cAuto Confirm User\u201d su Supabase.';
+    errore(m);
+    document.getElementById('auth-pwd').value='';
+    document.getElementById('auth-pwd').focus();
+  }
   btn.disabled=false; btn.textContent='Accedi';
 }
 </script>
@@ -1560,7 +1582,9 @@ function authMostraGate(messaggio){
 async function authAvvio(){
   authCarica();
   if(AUTH_SESS&&_authScaduta())await authRinnova();
-  if(!authToken())authMostraGate('');
+  /* la schermata di ingresso e' quella dell'app: qui basta assicurarsi
+     che la sessione sia valida */
+  if(!authToken()){var g=document.getElementById('auth-gate'); if(g)g.style.display='flex';}
 }
 
 async function pgcFetch(url,opts,tries){
@@ -1580,7 +1604,7 @@ async function pgcFetch(url,opts,tries){
       var r=await fetch(url,o);
       /* sessione non piu' valida: si richiede l'accesso invece di fallire in silenzio */
       if((r.status===401)&&typeof authMostraGate==='function'&&authToken()){
-        if(!(await authRinnova()))authMostraGate('Sessione scaduta, rientra.');
+        if(!(await authRinnova())){var g=document.getElementById('auth-gate'); if(g)g.style.display='flex';}
       }
       if(tm)clearTimeout(tm);
       return r;
