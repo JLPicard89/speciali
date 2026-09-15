@@ -1579,12 +1579,20 @@ function authMostraGate(messaggio){
   d.querySelector('#auth-pw').addEventListener('keydown',function(e){if(e.key==='Enter')vai();});
   setTimeout(function(){try{d.querySelector('#auth-mail').focus();}catch(e){}},50);
 }
+/* Rinnovo periodico: le chiamate che usano fetch direttamente non possono
+   fermarsi ad aspettare un rinnovo, quindi il token va tenuto sempre fresco. */
+function authRinnovoPeriodico(){
+  setInterval(async function(){
+    try{ if(authToken()&&_authScaduta())await authRinnova(); }catch(e){}
+  },4*60*1000);
+}
 async function authAvvio(){
   authCarica();
   if(AUTH_SESS&&_authScaduta())await authRinnova();
   /* la schermata di ingresso e' quella dell'app: qui basta assicurarsi
      che la sessione sia valida */
   if(!authToken()){var g=document.getElementById('auth-gate'); if(g)g.style.display='flex';}
+  else authRinnovoPeriodico();
 }
 
 async function pgcFetch(url,opts,tries){
@@ -1616,7 +1624,11 @@ async function pgcFetch(url,opts,tries){
   }
 }
 function pgcHdr(json){
-  const h={apikey:PGC_KEY,Authorization:'Bearer '+PGC_KEY};
+  /* Il token di chi ha fatto accesso va messo qui, non solo nel wrapper delle
+     chiamate: diverse richieste usano fetch direttamente e quel passaggio le
+     salterebbe, arrivando al database come anonime e ricevendo zero righe. */
+  const t=(typeof authToken==='function')?authToken():null;
+  const h={apikey:PGC_KEY,Authorization:'Bearer '+(t||PGC_KEY)};
   if(json)h['Content-Type']='application/json';
   return h;
 }
