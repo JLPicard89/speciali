@@ -1643,18 +1643,32 @@ function authBadgeAutoNascondi(){
   function _presente(doc,id){
     try{
       var e=doc.getElementById(id);
-      return !!(e&&e.offsetParent!==null&&doc.defaultView.getComputedStyle(e).display!=='none');
+      if(!e)return false;
+      /* NON usare offsetParent: per specifica vale null su ogni elemento con
+         posizione fissa, anche se e' perfettamente visibile a schermo. E le
+         schermate che ci interessano (walkthrough, render, accesso) sono tutte
+         a posizione fissa: la verifica risultava sempre negativa. Si guarda
+         invece l'ingombro reale e lo stile calcolato. */
+      var st=(doc.defaultView||window).getComputedStyle(e);
+      if(st.display==='none'||st.visibility==='hidden')return false;
+      return (e.offsetWidth>0||e.offsetHeight>0||e.getClientRects().length>0);
     }catch(err){ return false; }
   }
   function verifica(){
     var b=document.getElementById('auth-badge');
     if(!b)return;
-    var docs=[document];
-    try{
-      Array.prototype.forEach.call(document.getElementsByTagName('iframe'),function(f){
-        try{ if(f.contentDocument)docs.push(f.contentDocument); }catch(err){}
-      });
-    }catch(err){}
+    /* le cornici sono annidate: il walkthrough sta in una cornice dentro la
+       cornice del disegno, quindi la raccolta va fatta in profondita' */
+    var docs=[];
+    (function raccogli(d,liv){
+      if(!d||liv>3)return;
+      docs.push(d);
+      try{
+        Array.prototype.forEach.call(d.getElementsByTagName('iframe'),function(f){
+          try{ if(f.contentDocument)raccogli(f.contentDocument,liv+1); }catch(err){}
+        });
+      }catch(err){}
+    })(document,0);
     var coperto=false;
     for(var d=0;d<docs.length&&!coperto;d++){
       for(var i=0;i<SOPRA.length;i++){
