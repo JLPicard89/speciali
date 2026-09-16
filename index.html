@@ -1635,19 +1635,38 @@ function authBadge(){
    funziona anche per schermate future senza doverle elencare qui. */
 function authBadgeAutoNascondi(){
   var SOPRA=['walk-ov','render-ov','auth-gate'];
+  /* Il disegno 3D vive dentro una cornice, e le sue schermate a tutto schermo
+     (walkthrough, render) nascono nel documento di quella cornice, non in
+     questo. Cercandole solo qui non si trovavano mai, e l'indicatore restava
+     sopra a coprirle. Si guarda quindi anche dentro le cornici della stessa
+     origine, che sono leggibili senza restrizioni. */
+  function _presente(doc,id){
+    try{
+      var e=doc.getElementById(id);
+      return !!(e&&e.offsetParent!==null&&doc.defaultView.getComputedStyle(e).display!=='none');
+    }catch(err){ return false; }
+  }
   function verifica(){
     var b=document.getElementById('auth-badge');
     if(!b)return;
-    var coperto=SOPRA.some(function(id){
-      var e=document.getElementById(id);
-      return e&&e.offsetParent!==null&&getComputedStyle(e).display!=='none';
-    });
+    var docs=[document];
+    try{
+      Array.prototype.forEach.call(document.getElementsByTagName('iframe'),function(f){
+        try{ if(f.contentDocument)docs.push(f.contentDocument); }catch(err){}
+      });
+    }catch(err){}
+    var coperto=false;
+    for(var d=0;d<docs.length&&!coperto;d++){
+      for(var i=0;i<SOPRA.length;i++){
+        if(_presente(docs[d],SOPRA[i])){coperto=true;break;}
+      }
+    }
     b.style.display=coperto?'none':'flex';
   }
   try{
     new MutationObserver(verifica).observe(document.body,{childList:true,subtree:false,attributes:true,attributeFilter:['style']});
   }catch(e){}
-  setInterval(verifica,700);   /* rete di sicurezza per i cambi di stile interni */
+  setInterval(verifica,350);   /* rete di sicurezza: le cornici non notificano i cambi */
   verifica();
 }
 
