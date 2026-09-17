@@ -1018,6 +1018,14 @@ function l3dPrevLoadBuilder(){
              chunk('var ARCH_AP=0;','function archExpr(')+
              chunk('function archExpr(','function loadCfg3d(');
     (0,eval)(code);
+    /* Si ricava dal sorgente stesso l'elenco delle forme che il motore sa
+       disegnare. Tenerlo scritto a mano significa che a ogni forma nuova il
+       controllo del JSON resta indietro e rifiuta archetipi validi: e' quello
+       che e' successo con vasche, griglie, piani cottura e simili. */
+    var trovate={};
+    code.replace(/pt\.forma\s*===\s*['"]([a-zA-Z0-9_]+)['"]/g,function(_,f){trovate[f]=1;});
+    var elenco=Object.keys(trovate);
+    if(elenco.length)window.L3D_FORME=elenco.sort();
     return !!window.buildArchFromDef;
   }catch(e){L3D_PV.err='Motore archetipi: '+e.message;return false;}
 }
@@ -1241,8 +1249,12 @@ async function l3dArchSave(){
   try{
     parti=JSON.parse(document.getElementById('l3d-arch-json').value);
     if(!parti||!Array.isArray(parti.parti)||!parti.parti.length)throw new Error('manca l\u0027array "parti"');
+    if(!window.L3D_FORME&&typeof l3dPrevEngine==='function'){try{l3dPrevEngine();}catch(e){}}
+    var ammesse=window.L3D_FORME||['box','cyl'];
     parti.parti.forEach(function(p,k){
-      if(p.forma!=='box'&&p.forma!=='cyl')throw new Error('parte '+(k+1)+': forma deve essere box o cyl');
+      if(!p.forma)throw new Error('parte '+(k+1)+': manca \u0022forma\u0022');
+      if(ammesse.indexOf(p.forma)<0)
+        throw new Error('parte '+(k+1)+': forma \u0022'+p.forma+'\u0022 non riconosciuta.\nForme disponibili: '+ammesse.join(', '));
     });
   }catch(e){alert('JSON non valido: '+e.message);return;}
   try{
