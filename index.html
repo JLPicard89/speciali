@@ -1153,9 +1153,55 @@ function arOverlay(titolo, msg){
 }
 function arMsg(ov,t){ var b=ov&&ov.querySelector('#ar-body'); if(b)b.textContent=t; }
 function arChiudi(){ var o=document.getElementById('ar-ov'); if(o&&o.parentNode)o.parentNode.removeChild(o); }
+
+/* ── Apertura su un altro dispositivo ── */
+function arBarraLink(ov, url){
+  var vecchia=ov.querySelector('#ar-link'); if(vecchia)vecchia.remove();
+  var d=document.createElement('div');
+  d.id='ar-link';
+  d.style.cssText='flex:0 0 auto;background:#1f1e19;border-top:1px solid #34322c;padding:10px 14px;'+
+    'display:flex;align-items:center;gap:12px;color:#c9c7c2;font-size:12px';
+  d.innerHTML=
+    '<canvas id="ar-qr" width="96" height="96" style="background:#fff;border-radius:6px;flex:0 0 auto"></canvas>'+
+    '<div style="flex:1;min-width:0">'+
+      '<div style="font-weight:600;color:#efeeeb;margin-bottom:3px">Aprilo su un altro telefono</div>'+
+      '<div style="color:#8b8a86;line-height:1.45">Se qui la realt\u00e0 aumentata non parte, il dispositivo non \u00e8 certificato. '+
+      'Inquadra il codice con un telefono compatibile: il modello \u00e8 gi\u00e0 online.</div>'+
+      '<button id="ar-copia" style="margin-top:7px;border:1px solid #4a4842;border-radius:13px;padding:4px 11px;'+
+        'background:#302e28;color:#efeeeb;font-size:11px;cursor:pointer">Copia il link</button>'+
+    '</div>';
+  ov.appendChild(d);
+  var btn=d.querySelector('#ar-copia');
+  btn.onclick=function(){
+    try{
+      navigator.clipboard.writeText(url);
+      btn.textContent='Link copiato';
+      setTimeout(function(){btn.textContent='Copia il link';},1800);
+    }catch(e){ prompt('Copia il link:', url); }
+  };
+  function disegna(){
+    try{ QRCode.toCanvas(document.getElementById('ar-qr'), url, {width:96, margin:1}); }catch(e){}
+  }
+  if(window.QRCode&&QRCode.toCanvas){ disegna(); return; }
+  var sc=document.createElement('script');
+  sc.src='https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+  sc.onload=disegna;
+  sc.onerror=function(){
+    var c=document.getElementById('ar-qr');
+    if(c&&c.parentNode)c.parentNode.removeChild(c);   /* resta il pulsante di copia */
+  };
+  document.head.appendChild(sc);
+}
+
 function arMostra(ov, url, nome){
   var b=ov.querySelector('#ar-body');
   if(!b)return;
+  /* Il modello e' su un indirizzo pubblico, quindi puo' essere aperto da
+     QUALSIASI telefono. Serve perche' la realta' aumentata richiede un
+     dispositivo certificato: dove manca, il codice si inquadra con un altro
+     telefono e l'AR parte li'. Torna utile anche davanti al cliente, che puo'
+     vedere il progetto in casa propria senza installare nulla. */
+  arBarraLink(ov, url);
   b.innerHTML='<model-viewer src="'+url+'" alt="'+offEsc(nome)+'" ar ar-scale="fixed" '+
     'ar-modes="webxr scene-viewer quick-look" camera-controls touch-action="pan-y" '+
     'shadow-intensity="1" exposure="0.9" '+
