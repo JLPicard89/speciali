@@ -1242,7 +1242,11 @@ function l3dArchClose(){
   if(L3D_PV.raf){cancelAnimationFrame(L3D_PV.raf);L3D_PV.raf=0;L3D_PV.ready=false;}
 }
 async function l3dArchSave(){
-  var nome=document.getElementById('l3d-arch-nome').value.trim().toLowerCase();
+  /* Il nome NON va forzato in minuscolo: e' la chiave con cui il catalogo si
+     aggancia all'archetipo. Salvando un archetipo con maiuscole ("2V sg dx")
+     ne nasceva uno nuovo in minuscolo e l'originale veniva cancellato, lasciando
+     orfani i prodotti che lo referenziavano. */
+  var nome=document.getElementById('l3d-arch-nome').value.trim();
   var note=document.getElementById('l3d-arch-note').value.trim();
   if(!nome){alert('Serve un nome.');return;}
   var parti;
@@ -1263,10 +1267,28 @@ async function l3dArchSave(){
     const r=await pgcFetch(PGC_URL+'/rest/v1/archetipi_3d?on_conflict=nome',{method:'POST',headers:h,body:body});
     if(!r.ok)throw new Error('HTTP '+r.status);
     if(L3D_ARCH_EDIT&&L3D_ARCH_EDIT!==nome){
+      /* Rinominare un archetipo scollega i prodotti che lo usano: prima di
+         cancellare il vecchio nome si riagganciano al nuovo, altrimenti
+         resterebbero senza modello 3D senza che nessuno se ne accorga. */
+      try{
+        await pgcFetch(PGC_URL+'/rest/v1/catalogo?archetipo=eq.'+encodeURIComponent(L3D_ARCH_EDIT),
+          {method:'PATCH',headers:l3dHdr(true),body:JSON.stringify({archetipo:nome})});
+      }catch(e){}
       await pgcFetch(PGC_URL+'/rest/v1/archetipi_3d?nome=eq.'+encodeURIComponent(L3D_ARCH_EDIT),{method:'DELETE',headers:l3dHdr(true)});
     }
     l3dArchClose();
     await l3dArchLoad();
+    /* una conferma breve: chiudendo e basta sembrava che non fosse successo nulla */
+    if(typeof pgcToast==='function')pgcToast('Archetipo \u0022'+nome+'\u0022 salvato');
+    else{
+      var t=document.createElement('div');
+      t.textContent='Archetipo \u0022'+nome+'\u0022 salvato';
+      t.style.cssText='position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:9500;'+
+        'background:#0d7a5f;color:#fff;padding:9px 16px;border-radius:20px;font:500 13px system-ui;'+
+        'box-shadow:0 3px 14px rgba(0,0,0,.2)';
+      document.body.appendChild(t);
+      setTimeout(function(){ if(t.parentNode)t.parentNode.removeChild(t); },2600);
+    }
   }catch(e){alert('Salvataggio non riuscito: '+e.message);}
 }
 async function l3dArchDel(i){
