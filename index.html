@@ -948,10 +948,26 @@ function l3dArchRender(){
   var custom={};L3D_ARCH.forEach(function(a){custom[a.nome]=1;});
   var html='<table style="width:100%;border-collapse:collapse;font-size:12px"><tbody>';
   var vis=0;
-  L3D_ARCH.forEach(function(a,i){
+  /* si ordina per marchio e poi per nome, cosi' gli archetipi di uno stesso
+     marchio restano vicini invece di essere sparsi nell'elenco alfabetico */
+  var ordine=L3D_ARCH.map(function(a,i){
+    var mb=L3D_ARCH_BRAND[a.nome];
+    var m=mb?Object.keys(mb).sort().join(', '):'\uffff';
+    return {a:a, i:i, k:m+'\u0000'+String(a.nome||'')};
+  }).sort(function(p,q){ return p.k<q.k?-1:(p.k>q.k?1:0); });
+  ordine.forEach(function(o){
+    var a=o.a, i=o.i;
     if(!passaBrand(a.nome))return;
     vis++;
-    html+='<tr><td style="padding:2px 4px;font-weight:700">'+offEsc(a.nome)+'</td>'+
+    /* Il marchio davanti al nome: lo stesso archetipo puo' servire piu' marchi,
+       quindi si elencano tutti quelli che lo usano, ricavati dal catalogo. */
+    var mb=L3D_ARCH_BRAND[a.nome];
+    var marchi=mb?Object.keys(mb).sort():[];
+    var pref=marchi.length
+      ? '<span style="color:#8b8a86;font-weight:600">'+offEsc(marchi.join(', '))+'</span>'+
+        '<span style="color:#c9c7c2"> \u2013 </span>'
+      : '<span style="color:#c9c7c2;font-weight:500">\u2014 </span>';
+    html+='<tr><td style="padding:2px 4px;font-weight:700">'+pref+offEsc(a.nome)+'</td>'+
       '<td style="padding:2px 4px;color:#8b8a86;font-size:11px">'+((a.parti&&a.parti.parti)?a.parti.parti.length+' parti':'?')+'</td>'+
       '<td style="padding:2px 4px;text-align:right;white-space:nowrap">'+
       '<button class="pgc-abtn" style="width:24px;height:24px;font-size:11px" onclick="l3dArchEdit('+i+')">\u270e</button>'+
@@ -994,7 +1010,11 @@ function l3dPrevLoadBuilder(){
     }
     /* le variabili degli accessori (apertura ante, lato, misure vasca) stanno fra i due
        blocchi: senza di esse buildArchFromDef non risolve le espressioni */
-    var code=chunk('var ARCH_MAT={','function buildArchetype(')+
+    /* Il blocco dei materiali parte dalla tabella dei nomi, non da ARCH_MAT:
+       le funzioni di supporto (tinte base e costruttore del materiale basico)
+       stanno prima, e tagliando piu' avanti restavano fuori — da cui l'errore
+       "_matBasico is not defined" nell'anteprima e nell'esportazione. */
+    var code=chunk('var ARCH_MAT_NOMI={','function buildArchetype(')+
              chunk('var ARCH_AP=0;','function archExpr(')+
              chunk('function archExpr(','function loadCfg3d(');
     (0,eval)(code);
